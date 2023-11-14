@@ -1,6 +1,7 @@
 const { Probot } = require('probot');
 const express = require('express');
 const serverless = require('serverless-http');
+const { getSecrets } = require('./secrets');  // Make sure this path is correct
 
 const appFn = (app) => {
     // Handle new installations
@@ -53,6 +54,8 @@ const appFn = (app) => {
                 path: fullPath
             });
 
+            console.log(`File content for ${githubUrl}:`, fileContent.data);
+
             res.json(fileContent.data);
         } catch (error) {
             console.error('Error retrieving file:', error);
@@ -61,8 +64,27 @@ const appFn = (app) => {
     });
 };
 
-const probot = new Probot({});
-const app = express();
-app.use(probot.load(appFn));
+// Async function to initialize and start the Probot app
+const initProbotApp = async () => {
+    // Fetch secrets
+    const appSecrets = await getSecrets('githubapp-private');
+    const webhookSecrets = await getSecrets('githubapp-webhook');
 
-module.exports.handler = serverless(app);
+    // Set environment variables
+    process.env.APP_ID = appSecrets.APP_ID;
+    process.env.PRIVATE_KEY = appSecrets.PRIVATE_KEY.replace(/\\n/g, '\n');
+    process.env.WEBHOOK_SECRET = webhookSecrets.WEBHOOK_SECRET;
+
+    // Initialize Probot with the secrets
+    const probot = new Probot({});
+    const app = express();
+    app.use(probot.load(appFn));
+
+    return serverless(app);
+};
+
+// AWS Lambda handler
+module.exports.handler = async (event, context) => {
+    const probotServer = await initProbotApp();
+    return probotServer(event, context);
+};
