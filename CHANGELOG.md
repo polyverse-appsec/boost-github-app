@@ -11,7 +11,7 @@ Polyverse Boost GitHub App
 - Retrieves secrets stored in AWS for GitHub app private key and secure GitHub webhook validation
 
 ### Enhancements
-- N/A
+- Retrieve public GitHub source files anonymously before trying a specific user
 
 ### Bug Fixes
 - N/A

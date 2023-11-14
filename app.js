@@ -1,7 +1,8 @@
 const { Probot } = require('probot');
 const express = require('express');
 const serverless = require('serverless-http');
-const { getSecrets } = require('./secrets');  // Make sure this path is correct
+const { getSecrets } = require('./secrets');
+const { Octokit } = require("@octokit/rest");
 
 const appFn = (app) => {
     // Handle new installations
@@ -41,42 +42,60 @@ const appFn = (app) => {
             }
         }
     });
-
+    
     // Handler to retrieve a specific file using a GitHub URL
     app.route('/get_file_from_url').get(async (req, res) => {
         try {
             const githubUrl = req.query.url;
             const parsedUrl = new URL(githubUrl);
             const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
-
+    
             // Basic URL validation
             if (pathParts.length < 4 || parsedUrl.hostname !== 'github.com') {
                 return res.status(400).send('Invalid GitHub URL');
             }
-
+    
             // Extract org/user, repo, and file path
             const [org, repo, , ...filePath] = pathParts;
             const fullPath = filePath.join('/');
-
-            // TODO: Determine installationId based on the user/org
-            const installationId = /* Your logic to get installation ID */;
-
-            const octokit = await app.auth(installationId);
-
-            const fileContent = await octokit.rest.repos.getContent({
-                owner: org,
-                repo,
-                path: fullPath
-            });
-
-            console.log(`File content for ${githubUrl}:`, fileContent.data);
-
-            res.json(fileContent.data);
+    
+            // Initialize Octokit for public access
+            const publicOctokit = new Octokit();
+    
+            try {
+                // First, try to retrieve the file using public access
+                const fileContent = await publicOctokit.rest.repos.getContent({
+                    owner: org,
+                    repo,
+                    path: fullPath
+                });
+    
+                console.log(`Public file content for ${githubUrl}:`, fileContent.data);
+                return res.json(fileContent.data);
+            } catch (publicError) {
+                console.log("Public access failed, trying authenticated access...");
+    
+                // Fallback to authenticated access if public access fails
+                // TODO: Determine installationId based on the user/org
+                const installationId = /* Your logic to get installation ID */;
+    
+                const authenticatedOctokit = await app.auth(installationId);
+    
+                const fileContent = await authenticatedOctokit.rest.repos.getContent({
+                    owner: org,
+                    repo,
+                    path: fullPath
+                });
+    
+                console.log(`Authenticated file content for ${githubUrl}:`, fileContent.data);
+                res.json(fileContent.data);
+            }
         } catch (error) {
             console.error('Error retrieving file:', error);
             res.status(500).send('Error retrieving file');
         }
     });
+    
 };
 
 // Async function to initialize and start the Probot app
