@@ -6,6 +6,8 @@ const { Octokit } = require("@octokit/rest");
 
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
+const installationsKeyValueStore = 'Boost.GitHub-App.installations';
+
 const appFn = (app) => {
     // Handle new installations
     app.on(['installation.created', 'installation_repositories.added'], async (context) => {
@@ -26,12 +28,11 @@ const appFn = (app) => {
         
                 // Save to DynamoDB
                 const params = {
-                    TableName: 'GithubAppInstallations', // Replace with your DynamoDB table name
+                    TableName: installationsKeyValueStore,
                     Item: {
-                        email: userEmail,
+                        email: userEmail, // primary key
                         installationId: installationId,
                         username: userInfo.data.login,
-                        // Any other data you want to save
                     },
                 };
         
@@ -99,10 +100,30 @@ const appFn = (app) => {
             } catch (publicError) {
                 console.log("Public access failed, trying authenticated access...");
     
-                // Fallback to authenticated access if public access fails
-                // TODO: Determine installationId based on the user/org
-                const installationId = /* Your logic to get installation ID */;
-    
+                // Retrieve the email from the request
+                const userEmail = req.query.email;
+                if (!userEmail) {
+                    return res.status(400).send('Email address is required');
+                }
+
+                // Lookup the installationId based on the email
+                const queryParams = {
+                    TableName: installationsKeyValueStore,
+                    Key: { email: userEmail },
+                };
+
+                let installationId;
+                try {
+                    const data = await dynamodb.get(queryParams).promise();
+                    installationId = data.Item ? data.Item.installationId : null;
+
+                    if (!installationId) {
+                        return res.status(404).send('Installation ID not found for provided email');
+                    }
+                } catch (dbError) {
+                    console.error('Error retrieving installation ID from DynamoDB:', dbError);
+                    return res.status(500).send('Failed to retrieve installation information');
+                }    
                 const authenticatedOctokit = await app.auth(installationId);
     
                 const fileContent = await authenticatedOctokit.rest.repos.getContent({
