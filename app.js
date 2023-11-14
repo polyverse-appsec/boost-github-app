@@ -7,6 +7,21 @@ const appFn = (app) => {
     // Handle new installations
     app.on(['installation.created', 'installation_repositories.added'], async (context) => {
         const installationId = context.payload.installation.id;
+        const installingUser = context.payload.installation.account; // Information about the user who installed the app
+    
+        const octokit = await app.auth(installationId);
+    
+        // Get user information, including email address
+        try {
+            const userInfo = await octokit.rest.users.getByUsername({
+                username: installingUser.login,
+            });
+    
+            // userInfo.data.email will contain the email address, if publicly available
+            console.log(`Installation User: ${userInfo.data.login}, Email: ${userInfo.data.email}`);
+        } catch (error) {
+            console.error(`Error retrieving installation user info:`, error);
+        }
         const repositories = context.payload.repositories || context.payload.repositories_added;
 
         for (const repo of repositories) {
