@@ -4,6 +4,8 @@ const serverless = require('serverless-http');
 const { getSecrets } = require('./secrets');
 const { Octokit } = require("@octokit/rest");
 
+const dynamodb = new AWS.DynamoDB.DocumentClient();
+
 const appFn = (app) => {
     // Handle new installations
     app.on(['installation.created', 'installation_repositories.added'], async (context) => {
@@ -17,7 +19,29 @@ const appFn = (app) => {
             const userInfo = await octokit.rest.users.getByUsername({
                 username: installingUser.login,
             });
-    
+        
+            if (userInfo.data.email) {
+                const userEmail = userInfo.data.email;
+                console.log(`Installation User: ${userInfo.data.login}, Email: ${userEmail}`);
+        
+                // Save to DynamoDB
+                const params = {
+                    TableName: 'GithubAppInstallations', // Replace with your DynamoDB table name
+                    Item: {
+                        email: userEmail,
+                        installationId: installationId,
+                        username: userInfo.data.login,
+                        // Any other data you want to save
+                    },
+                };
+        
+                await dynamodb.put(params).promise();
+                console.log('Installation data saved to DynamoDB');
+            } else {
+                console.log(`Installation User: ${userInfo.data.login}`);
+                console.log(`Could not find email address for user ${userInfo.data.login}`)
+            }
+
             // userInfo.data.email will contain the email address, if publicly available
             console.log(`Installation User: ${userInfo.data.login}, Email: ${userInfo.data.email}`);
         } catch (error) {

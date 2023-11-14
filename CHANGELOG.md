@@ -12,6 +12,7 @@ Polyverse Boost GitHub App
 
 ### Enhancements
 - Retrieve public GitHub source files anonymously before trying a specific user
+- GitHub usernames and emails are stored in AWS Dynamic for future GitHub file access
 
 ### Bug Fixes
 - N/A
