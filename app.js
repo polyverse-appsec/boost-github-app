@@ -144,19 +144,25 @@ const appFn = (app) => {
     
 };
 
+const BoostGitHubAppId = "472802";
+
+const secretStore = 'boost/GitHubApp';
+
 // Async function to initialize and start the Probot app
 const initProbotApp = async () => {
     // Fetch secrets
-    const appSecrets = await getSecrets('githubapp-private');
-    const webhookSecrets = await getSecrets('githubapp-webhook');
+    const appSecrets = await getSecrets(secretStore);
 
     // Set environment variables
-    process.env.APP_ID = appSecrets.APP_ID;
-    process.env.PRIVATE_KEY = appSecrets.PRIVATE_KEY.replace(/\\n/g, '\n');
-    process.env.WEBHOOK_SECRET = webhookSecrets.WEBHOOK_SECRET;
+    process.env.PRIVATE_KEY = appSecrets['githubapp-private'];
+    process.env.WEBHOOK_SECRET = appSecrets['githubapp-webhook'];
 
     // Initialize Probot with the secrets
-    const probot = new Probot({});
+    const probot = new Probot({
+        appId:BoostGitHubAppId,
+        privateKey: appSecrets['githubapp-private'],
+        secret: appSecrets['githubapp-webhook'],
+    });
     const app = express();
     app.use(probot.load(appFn));
 
