@@ -1,5 +1,4 @@
-const { Probot } = require('probot');
-const express = require('express');
+const { createNodeMiddleware, Probot } = require('probot');
 const serverless = require('serverless-http');
 const { getSecrets } = require('./secrets');
 const { Octokit } = require("@octokit/rest");
@@ -9,7 +8,7 @@ const dynamodb = new AWS.DynamoDB.DocumentClient();
 
 const installationsKeyValueStore = 'Boost.GitHub-App.installations';
 
-const appFn = (app) => {
+const appFn = (app ) => {
     // Handle new installations
     app.on(['installation.created', 'installation_repositories.added'], async (context) => {
         const installationId = context.payload.installation.id;
@@ -68,9 +67,11 @@ const appFn = (app) => {
             }
         }
     });
-    
-    // Handler to retrieve a specific file using a GitHub URL
-    app.route('/get_file_from_url').get(async (req, res) => {
+
+    /*
+    // Define the '/get_file_from_url' route using Probot's router
+    const router = getRouter('/api');
+    app.get('/get_file_from_url', async (req, res, next) => {
         try {
             const githubUrl = req.query.url;
             const parsedUrl = new URL(githubUrl);
@@ -140,8 +141,9 @@ const appFn = (app) => {
             console.error('Error retrieving file:', error);
             res.status(500).send('Error retrieving file');
         }
+        
     });
-    
+    */
 };
 
 const BoostGitHubAppId = "472802";
@@ -163,10 +165,10 @@ const initProbotApp = async () => {
         privateKey: appSecrets['githubapp-private'],
         secret: appSecrets['githubapp-webhook'],
     });
-    const app = express();
-    app.use(probot.load(appFn));
+    await probot.load(appFn, { getRouter: () => null });
+    const middleware = createNodeMiddleware(appFn, { probot });
 
-    return serverless(app);
+    return serverless(middleware);
 };
 
 // AWS Lambda handler
