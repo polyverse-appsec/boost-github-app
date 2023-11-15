@@ -3,6 +3,7 @@ const express = require('express');
 const serverless = require('serverless-http');
 const { getSecrets } = require('./secrets');
 const { Octokit } = require("@octokit/rest");
+const AWS = require('aws-sdk');
 
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
