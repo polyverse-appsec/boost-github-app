@@ -9,6 +9,9 @@ const dynamodb = new AWS.DynamoDB.DocumentClient();
 const installationsKeyValueStore = 'Boost.GitHub-App.installations';
 
 const appFn = (app ) => {
+    // TODO: Need to handle installation deleted event (installation.deleted) and
+    //      installation_repositories removed event (installation_repositories.removed)
+
     // Handle new installations
     app.on(['installation.created', 'installation_repositories.added'], async (context) => {
         const installationId = context.payload.installation.id;
@@ -67,83 +70,6 @@ const appFn = (app ) => {
             }
         }
     });
-
-    /*
-    // Define the '/get_file_from_url' route using Probot's router
-    const router = getRouter('/api');
-    app.get('/get_file_from_url', async (req, res, next) => {
-        try {
-            const githubUrl = req.query.url;
-            const parsedUrl = new URL(githubUrl);
-            const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
-    
-            // Basic URL validation
-            if (pathParts.length < 4 || parsedUrl.hostname !== 'github.com') {
-                return res.status(400).send('Invalid GitHub URL');
-            }
-    
-            // Extract org/user, repo, and file path
-            const [org, repo, , ...filePath] = pathParts;
-            const fullPath = filePath.join('/');
-    
-            // Initialize Octokit for public access
-            const publicOctokit = new Octokit();
-    
-            try {
-                // First, try to retrieve the file using public access
-                const fileContent = await publicOctokit.rest.repos.getContent({
-                    owner: org,
-                    repo,
-                    path: fullPath
-                });
-    
-                console.log(`Public file content for ${githubUrl}:`, fileContent.data);
-                return res.json(fileContent.data);
-            } catch (publicError) {
-                console.log("Public access failed, trying authenticated access...");
-    
-                // Retrieve the email from the request
-                const userEmail = req.query.email;
-                if (!userEmail) {
-                    return res.status(400).send('Email address is required');
-                }
-
-                // Lookup the installationId based on the email
-                const queryParams = {
-                    TableName: installationsKeyValueStore,
-                    Key: { email: userEmail },
-                };
-
-                let installationId;
-                try {
-                    const data = await dynamodb.get(queryParams).promise();
-                    installationId = data.Item ? data.Item.installationId : null;
-
-                    if (!installationId) {
-                        return res.status(404).send('Installation ID not found for provided email');
-                    }
-                } catch (dbError) {
-                    console.error('Error retrieving installation ID from DynamoDB:', dbError);
-                    return res.status(500).send('Failed to retrieve installation information');
-                }    
-                const authenticatedOctokit = await app.auth(installationId);
-    
-                const fileContent = await authenticatedOctokit.rest.repos.getContent({
-                    owner: org,
-                    repo,
-                    path: fullPath
-                });
-    
-                console.log(`Authenticated file content for ${githubUrl}:`, fileContent.data);
-                res.json(fileContent.data);
-            }
-        } catch (error) {
-            console.error('Error retrieving file:', error);
-            res.status(500).send('Error retrieving file');
-        }
-        
-    });
-    */
 };
 
 const BoostGitHubAppId = "472802";
