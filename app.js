@@ -4,7 +4,6 @@ const { getSecret, getSecrets } = require('./secrets');
 const { Octokit } = require("@octokit/rest");const { createAppAuth } = require("@octokit/auth-app");
 const AWS = require('aws-sdk');
 const express = require('express');
-const { createPrivateKey } = require('crypto');
 const fs = require('fs');
 const { env } = require('process');
 const dynamodb = new AWS.DynamoDB.DocumentClient();
@@ -111,13 +110,6 @@ const initProbotApp = async () => {
     process.env.WEBHOOK_SECRET = webhookSecret;
     process.env.WEBHOOK_PROXY_URL = "https://smee.io/O4DBvTwAGVcjJHan";
 
-//    const rawKey = fs.readFileSync('/Users/stephenfisher/Downloads/polyverse-boost.2023-11-15.private-key.pem', 'utf8');
-//    let envKey = process.env.PRIVATE_KEY;
-//    const filePrivateKey = createPrivateKey(rawKey);
-//    process.env.PRIVATE_KEY = rawKey;
-//    envKey = process.env.PRIVATE_KEY;
-    const envKeyObject =  createPrivateKey(privateKey);
-
     // Initialize Probot with the secrets
     const probot = new Probot({
         appId:BoostGitHubAppId,
@@ -125,14 +117,8 @@ const initProbotApp = async () => {
         secret: webhookSecret,
     });
 
-    if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
-        const middleware = createNodeMiddleware(appFn, { probot });
-        return serverless(middleware);
-    } else {
-        const app = express();
-        app.use(probot.load(appFn));
-        return serverless(app);
-    }
+    const middleware = createNodeMiddleware(appFn, { probot });
+    return serverless(middleware);
 };
 
 // AWS Lambda handler
