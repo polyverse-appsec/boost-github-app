@@ -12,7 +12,7 @@ const appFn = (app ) => {
     //      installation_repositories removed event (installation_repositories.removed)
 
     // Handle new installations
-    app.on(['installation', 'installation_repositories', 'created'], async (context) => {
+    app.on(['installation', 'installation_repositories'], async (context) => {
         if (Buffer.isBuffer(context.payload)) {
             context.payload = JSON.parse(context.payload.toString());
         } else if (typeof context.payload === 'string') {
