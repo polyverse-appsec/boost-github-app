@@ -2,10 +2,11 @@ service: boost-github-app
 
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs18.x
   region: us-west-2
   stage: dev
   environment:
+    APP_VERSION: 0.1.2
   iamRoleStatements:
     - Effect: Allow
       Action:
