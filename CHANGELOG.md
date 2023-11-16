@@ -12,6 +12,7 @@ Polyverse Boost GitHub App
 - Enable Secret API to store full text blobs with embedded newlines (e.g. private keys)
 - Raise Node.js runtime version from v14 to v18 (for AWS and perf and functionality)
 - Added App version to log
+- Store all emails in Boost accounst store as lower-case for case-insensitive matching and consistency
 
 ### Bug Fixes
 - Fix permission issue causing Lambda AWS crash when accessing DynamoDB and Secrets

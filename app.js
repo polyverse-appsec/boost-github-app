@@ -49,7 +49,7 @@ async function handleNewInstallation(app, action, payload) {
         });
     
         if (userInfo.data.email) {
-            const userEmail = userInfo.data.email;
+            const userEmail = userInfo.data.email.toLowerCase();
             console.log(`Installation User: ${userInfo.data.login}, Email: ${userEmail}`);
     
             // Save to DynamoDB
