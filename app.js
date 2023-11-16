@@ -1,11 +1,8 @@
 const { createNodeMiddleware, Probot } = require('probot');
 const serverless = require('serverless-http');
-const { getSecret, getSecrets } = require('./secrets');
-const { Octokit } = require("@octokit/rest");const { createAppAuth } = require("@octokit/auth-app");
+const { getSecret } = require('./secrets');
 const AWS = require('aws-sdk');
-const express = require('express');
-const fs = require('fs');
-const { env } = require('process');
+
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
 const installationsKeyValueStore = 'Boost.GitHub-App.installations';
