@@ -6,7 +6,20 @@ provider:
   region: us-west-2
   stage: dev
   environment:
-
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:us-west-2:*:table/Boost.GitHub-App.installations"
+    - Effect: "Allow"
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource: "arn:aws:secretsmanager:us-west-2:*:secret:*"
 
 functions:
   probot:
