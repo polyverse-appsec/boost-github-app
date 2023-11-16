@@ -1,3 +1,6 @@
+// print the version of the app - from env variable APP_VERSION
+console.log(`App version: ${process.env.APP_VERSION}`);
+
 const { createNodeMiddleware, Probot } = require('probot');
 const serverless = require('serverless-http');
 const { getSecret } = require('./secrets');
