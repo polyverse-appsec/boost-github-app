@@ -3,6 +3,18 @@ Polyverse Boost GitHub App
 
 # Release Notes
 
+## Version 0.1.2: November 16th, 2023
+
+### New Features
+- N/A
+
+### Enhancements
+- Enable Secret API to store full text blobs with embedded newlines (e.g. private keys)
+
+### Bug Fixes
+- Fix permission issue causing Lambda AWS crash when accessing DynamoDB and Secrets
+- Remove warning on 'created' invalid Webhook name
+
 ## Version 0.1.1: November 15th, 2023
 
 ### New Features
