@@ -3,6 +3,18 @@ Polyverse Boost GitHub App
 
 # Release Notes
 
+## Version 0.1.1: November 15th, 2023
+
+### New Features
+- N/A
+
+### Enhancements
+- Enable Secret API to store full text blobs with embedded newlines (e.g. private keys)
+
+### Bug Fixes
+- Fix AWS provider encoded payloads
+- Fixes for authentication issues with retrieving files and user info
+
 ## Version 0.1.0: November 14th, 2023
 
 ### New Features

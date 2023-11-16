@@ -7,7 +7,6 @@
             "request": "launch",
             "args": [
                 "offline",
-                "--noPrependStageInUrl",
                 "--noTimeout",
             ],
             "cwd": "${workspaceFolder}",
