@@ -1,3 +1,6 @@
 node_modules/**
 node_modules/@types/**
 .serverless/**
+
+# Except for create-request.js in serverless-http
+!node_modules/serverless-http/lib/provider/aws/create-request.js
