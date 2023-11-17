@@ -1,6 +1,10 @@
-node_modules/**
-node_modules/@types/**
+
+node_modules/*
 .serverless/**
 
 # Except for create-request.js in serverless-http
 !node_modules/serverless-http/lib/provider/aws/create-request.js
+!node_modules/@octokit/webhooks-methods/dist-src/node/verify.js
+!node_modules/@octokit/webhooks-methods/dist-node/index.js
+!node_modules/@octokit/webhooks/dist-node/index.js
+!node_modules/@octokit/webhooks/dist-src/verify-and-receive.js
