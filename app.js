@@ -27,10 +27,15 @@ const appFn = (app ) => {
 
 };
 
-async function handleNewInstallation(app, action, payload) {
+async function handleNewInstallation(app, method, payload) {
     const installationId = payload.installation.id;
     const installingUser = payload.installation.account; // Information about the user who installed the app
 
+    if (payload.action === "deleted") {
+        // TODO: we need to delete our account information for this installation
+        console.log(`Installation ${installationId} deleted by User account: ${installingUser.login}`);
+        return;
+    }
     /* TODO: This doesn't work due to "Resource not accessible by integration"
     try {
         const octokit = await app.auth(installationId);
@@ -108,7 +113,7 @@ const initProbotApp = async () => {
 
     process.env.PRIVATE_KEY = privateKey;
     process.env.WEBHOOK_SECRET = webhookSecret;
-    process.env.WEBHOOK_PROXY_URL = "https://smee.io/O4DBvTwAGVcjJHan";
+    // process.env.WEBHOOK_PROXY_URL = "https://smee.io/?????????";
 
     // Initialize Probot with the secrets
     const probot = new Probot({

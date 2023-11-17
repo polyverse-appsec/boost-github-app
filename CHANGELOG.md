@@ -13,6 +13,7 @@ Polyverse Boost GitHub App
 - Raise Node.js runtime version from v14 to v18 (for AWS and perf and functionality)
 - Added App version to log
 - Store all emails in Boost accounst store as lower-case for case-insensitive matching and consistency
+- Handle Installation deletions (e.g. User removes permission for Boost app) by logging and not accessing their data (account deletion is not supported)
 
 ### Bug Fixes
 - Fix permission issue causing Lambda AWS crash when accessing DynamoDB and Secrets
