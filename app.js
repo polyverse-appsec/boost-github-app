@@ -56,18 +56,8 @@ async function handleNewInstallation(app, method, payload) {
         if (userInfo.data.email) {
             const userEmail = userInfo.data.email.toLowerCase();
             console.log(`Installation User: ${userInfo.data.login}, Email: ${userEmail}`);
-    
-            // Save to DynamoDB
-            const params = {
-                TableName: installationsKeyValueStore,
-                Item: {
-                    email: userEmail, // primary key
-                    installationId: installationId,
-                    username: userInfo.data.login,
-                },
-            };
-    
-            await dynamodb.put(params).promise();
+
+            await saveUser(userEmail, installationId, userInfo.data.login);
             console.log('Installation data saved to DynamoDB');
         } else {
             console.log(`Installation User: ${userInfo.data.login}`);
