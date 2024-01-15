@@ -23,8 +23,9 @@ const appFn = (app ) => {
 async function handleInstallationChange(app, method, payload) {
     const installationId = payload.installation.id;
     const installingUser = payload.installation.account; // Information about the user who installed the app
+    const targetType = payload.installation.target_type; // Type of the account ("User" or "Organization")
 
-    console.log("Deletion request: Payload:", JSON.stringify(payload));
+    console.log("Installation Change: Payload:", JSON.stringify(payload));
 
     if (payload.action === "deleted") {
         // Call the function to delete installation info from DynamoDB
@@ -48,23 +49,24 @@ async function handleInstallationChange(app, method, payload) {
             username: installingUser.login,
         });
     
-        if (userInfo.data.email) {
-            const userEmail = userInfo.data.email.toLowerCase();
-            console.log(`Installation User: ${userInfo.data.login}, Email: ${userEmail}`);
+        // Determine if the installation is for a user or an organization
+        if (targetType === 'Organization') {
+            console.log(`Organization Installation: ${installingUser.login}`);
+            await saveInstallationInfo(installingUser.login, installationId, installingUser.login);
+            console.log(`Installation data saved to DynamoDB for Organization: ${installingUser.login}`);
+        } else if (targetType === 'User') {
+            const userInfo = await octokit.rest.users.getByUsername({
+                username: installingUser.login,
+            });
 
-            await saveInstallationInfo(userEmail, installationId, userInfo.data.login);
-            console.log(`Installation data saved to DynamoDB for account: ${userEmail}`);
-        } else if (userInfo.data.login) {
-            // we're going to assume a login with no email is an organization
-            // and use the login as the email address / account name
-
-            console.log(`${userInfo.data.login} has no email; assuming Organization; using login as account name`)
-
-            await saveInstallationInfo(userInfo.data.login, installationId, userInfo.data.login);
-            console.log(`Installation data saved to DynamoDB for account: ${userInfo.data.login}`);
-
-        } else {
-            console.error(`Installation User with no login or email info: ${installingUser.login}`);
+            if (userInfo.data.email) {
+                const userEmail = userInfo.data.email.toLowerCase();
+                console.log(`User Installation: ${userInfo.data.login}, Email: ${userEmail}`);
+                await saveInstallationInfo(userEmail, installationId, userInfo.data.login);
+                console.log(`Installation data saved to DynamoDB for User: ${userEmail}`);
+            } else {
+                console.error(`User installation but no email info found for: ${installingUser.login}`);
+            }
         }
     } catch (error) {
         console.error(`Error retrieving installation user info:`, error);
