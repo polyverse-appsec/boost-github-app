@@ -87,7 +87,7 @@ async function handleInstallationChange(app, method, payload) {
             // for debugging, we can dump file info to the console
             // console.log(`Files in ${repo.name}:`, files.data);
 
-            console.log(`Repo Access Granted for: ${repo.name}`);
+            console.log(`Repo Access Granted for ${targetType} ${installingUser.login}: ${repo.name}`);
 
         } catch (error) {
             console.error(`Error accessing files in ${repo.name}:`, error);
