@@ -30,12 +30,19 @@ async function handleInstallationChange(app, method, payload) {
     const installingUser = payload.installation.account; // Information about the user who installed the app
 
     if (payload.action === "deleted") {
-        // TODO: Need to handle installation deleted event (installation.deleted) and
-        //      installation_repositories removed event (installation_repositories.removed)
+        // Call the function to delete installation info from DynamoDB
+        try {
+            await deleteInstallationInfo(installingUser.login);
+            console.log(`Installation data deleted from DynamoDB for account: ${installingUser.login}`);
+        } catch (error) {
+            console.error(`Error deleting installation info from DynamoDB:`, error);
+        }
+
         console.log(`Installation ${installationId} deleted by User account: ${installingUser.login}`);
+        
         return;
     }
-
+s
     // Get user information, including email address
     try {
         const octokit = await app.auth(installationId);

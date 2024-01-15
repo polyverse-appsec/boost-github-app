@@ -43,3 +43,20 @@ export async function saveInstallationInfo (accountName, installationId, usernam
     };
     await dynamoDB.put(params).promise();
 }
+
+export async function deleteInstallationInfo(accountName) {
+    // Delete from DynamoDB
+    const params = {
+        TableName: installationsKeyValueStore,
+        Key: {
+            account: accountName,
+        },
+    };
+
+    try {
+        await dynamoDB.delete(params).promise();
+        console.log(`Successfully deleted installation info for account: ${accountName}`);
+    } catch (error) {
+        console.error(`Error deleting installation info:`, error);
+    }
+}

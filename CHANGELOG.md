@@ -7,6 +7,7 @@ Polyverse Boost GitHub App
 
 ### New Features
 - Add persistence of Installation info in AWS Dynamo
+- Add Installation deletion when app is deleted/uninstalled by User or Organization
 
 ### Enhancements
 - N/A
