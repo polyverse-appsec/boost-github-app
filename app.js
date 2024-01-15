@@ -4,12 +4,7 @@ console.log(`App version: ${process.env.APP_VERSION}`);
 const { createNodeMiddleware, Probot } = require('probot');
 const serverless = require('serverless-http');
 const { getSecret } = require('./secrets');
-const AWS = require('aws-sdk');
 const { saveInstallationInfo } = require('./account');
-
-const dynamodb = new AWS.DynamoDB.DocumentClient();
-
-const installationsKeyValueStore = 'Boost.GitHub-App.installations';
 
 const appFn = (app ) => {
     // Handle new installations
