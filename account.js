@@ -2,7 +2,7 @@ const dynamoDB = new AWS.DynamoDB.DocumentClient();
 
 const installationsKeyValueStore = 'Boost.GitHub-App.installations';
 
-export async function getInstallationInfo (accountName) {
+async function getInstallationInfo (accountName) {
 
     // account can be either an email address for a user
     // or an org name for an organization installation
@@ -31,7 +31,7 @@ export async function getInstallationInfo (accountName) {
     }
 }
 
-export async function saveInstallationInfo (accountName, installationId, username) {
+async function saveInstallationInfo (accountName, installationId, username) {
     // Save to DynamoDB
     const params = {
         TableName: installationsKeyValueStore,
@@ -44,7 +44,7 @@ export async function saveInstallationInfo (accountName, installationId, usernam
     await dynamoDB.put(params).promise();
 }
 
-export async function deleteInstallationInfo(accountName) {
+async function deleteInstallationInfo(accountName) {
     // Delete from DynamoDB
     const params = {
         TableName: installationsKeyValueStore,
