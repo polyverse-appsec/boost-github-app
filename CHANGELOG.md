@@ -3,6 +3,17 @@ Polyverse Boost GitHub App
 
 # Release Notes
 
+## Version 0.3.0: January 14th, 2023
+
+### New Features
+- Add persistence of Installation info in AWS Dynamo
+
+### Enhancements
+- N/A
+
+### Bug Fixes
+- Fixed storage bug blocking Dynamo key save
+
 ## Version 0.2.0: December 4th, 2023
 
 ### New Features
