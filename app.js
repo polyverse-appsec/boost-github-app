@@ -24,10 +24,11 @@ async function handleInstallationChange(app, method, payload) {
     const installationId = payload.installation.id;
     const installingUser = payload.installation.account; // Information about the user who installed the app
 
+    console.log("Deletion request: Payload:", JSON.stringify(payload));
+
     if (payload.action === "deleted") {
         // Call the function to delete installation info from DynamoDB
         try {
-            console.log("Deletion request: Payload:", JSON.stringify(payload));
 
             // delete the data from DynamoDB to immediately block further access to GitHub by Boost backend
             await deleteInstallationInfo(installingUser.login);
@@ -38,7 +39,7 @@ async function handleInstallationChange(app, method, payload) {
         }
         
         return;
-    } 
+    }
 
     // Get user information, including email address
     try {
