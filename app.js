@@ -4,7 +4,7 @@ console.log(`App version: ${process.env.APP_VERSION}`);
 const { createNodeMiddleware, Probot } = require('probot');
 const serverless = require('serverless-http');
 const { getSecret } = require('./secrets');
-const { saveInstallationInfo } = require('./account');
+const { saveInstallationInfo, deleteInstallationInfo } = require('./account');
 
 const appFn = (app ) => {
     // Handle new installations

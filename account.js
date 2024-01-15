@@ -62,3 +62,9 @@ async function deleteInstallationInfo(accountName) {
         console.error(`Error deleting installation info:`, error);
     }
 }
+
+module.exports = {
+    getInstallationInfo,
+    saveInstallationInfo,
+    deleteInstallationInfo
+};
