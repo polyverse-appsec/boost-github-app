@@ -5,15 +5,13 @@ const { createNodeMiddleware, Probot } = require('probot');
 const serverless = require('serverless-http');
 const { getSecret } = require('./secrets');
 const AWS = require('aws-sdk');
+const { saveInstallationInfo } = require('./account');
 
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
 const installationsKeyValueStore = 'Boost.GitHub-App.installations';
 
 const appFn = (app ) => {
-    // TODO: Need to handle installation deleted event (installation.deleted) and
-    //      installation_repositories removed event (installation_repositories.removed)
-
     // Handle new installations
     app.on(['installation', 'installation_repositories'], async (context) => {
         if (Buffer.isBuffer(context.payload)) {
@@ -21,30 +19,22 @@ const appFn = (app ) => {
         } else if (typeof context.payload === 'string') {
             context.payload = JSON.parse(context.payload);
         }
-        await handleNewInstallation(app, context.name, context.payload);
+        await handleInstallationChange(app, context.name, context.payload);
 
     });
 
 };
 
-async function handleNewInstallation(app, method, payload) {
+async function handleInstallationChange(app, method, payload) {
     const installationId = payload.installation.id;
     const installingUser = payload.installation.account; // Information about the user who installed the app
 
     if (payload.action === "deleted") {
-        // TODO: we need to delete our account information for this installation
+        // TODO: Need to handle installation deleted event (installation.deleted) and
+        //      installation_repositories removed event (installation_repositories.removed)
         console.log(`Installation ${installationId} deleted by User account: ${installingUser.login}`);
         return;
     }
-    /* TODO: This doesn't work due to "Resource not accessible by integration"
-    try {
-        const octokit = await app.auth(installationId);
-        const emails = await octokit.rest.users.listEmailsForAuthenticatedUser();
-        console.log(`Installation User: ${installingUser.login}, Email: ${emails}`);
-    } catch (error) {
-        console.error(`Error retrieving installation user emails:`, error);
-    }
-    */
 
     // Get user information, including email address
     try {
@@ -57,7 +47,7 @@ async function handleNewInstallation(app, method, payload) {
             const userEmail = userInfo.data.email.toLowerCase();
             console.log(`Installation User: ${userInfo.data.login}, Email: ${userEmail}`);
 
-            await saveUser(userEmail, installationId, userInfo.data.login);
+            await saveInstallationInfo(userEmail, installationId, userInfo.data.login);
             console.log('Installation data saved to DynamoDB');
         } else {
             console.log(`Installation User: ${userInfo.data.login}`);
@@ -82,7 +72,8 @@ async function handleNewInstallation(app, method, payload) {
                 path: '' // Root directory
             });
 
-            console.log(`Files in ${repo.name}:`, files.data);
+            // for debugging, we can dump file info to the console
+            // console.log(`Files in ${repo.name}:`, files.data);
         } catch (error) {
             console.error(`Error accessing files in ${repo.name}:`, error);
         }
