@@ -32,17 +32,19 @@ async function handleInstallationChange(app, method, payload) {
     if (payload.action === "deleted") {
         // Call the function to delete installation info from DynamoDB
         try {
+            console.log("Deletion request: Payload:", JSON.stringify(payload));
+
+            // delete the data from DynamoDB to immediately block further access to GitHub by Boost backend
             await deleteInstallationInfo(installingUser.login);
+
             console.log(`Installation data deleted from DynamoDB for account: ${installingUser.login}`);
         } catch (error) {
             console.error(`Error deleting installation info from DynamoDB:`, error);
         }
-
-        console.log(`Installation ${installationId} deleted by User account: ${installingUser.login}`);
         
         return;
-    }
-s
+    } 
+
     // Get user information, including email address
     try {
         const octokit = await app.auth(installationId);
@@ -55,14 +57,19 @@ s
             console.log(`Installation User: ${userInfo.data.login}, Email: ${userEmail}`);
 
             await saveInstallationInfo(userEmail, installationId, userInfo.data.login);
-            console.log('Installation data saved to DynamoDB');
-        } else {
-            console.log(`Installation User: ${userInfo.data.login}`);
-            console.log(`Could not find email address for user ${userInfo.data.login}`)
-        }
+            console.log(`Installation data saved to DynamoDB for account: ${userEmail}`);
+        } else if (userInfo.data.login) {
+            // we're going to assume a login with no email is an organization
+            // and use the login as the email address / account name
 
-        // userInfo.data.email will contain the email address, if publicly available
-        console.log(`Installation User: ${userInfo.data.login}, Email: ${userInfo.data.email}`);
+            console.log(`${userInfo.data.login} has no email; assuming Organization; using login as account name`)
+
+            await saveInstallationInfo(userInfo.data.login, installationId, userInfo.data.login);
+            console.log(`Installation data saved to DynamoDB for account: ${userInfo.data.login}`);
+
+        } else {
+            console.error(`Installation User with no login or email info: ${installingUser.login}`);
+        }
     } catch (error) {
         console.error(`Error retrieving installation user info:`, error);
     }
@@ -81,6 +88,9 @@ s
 
             // for debugging, we can dump file info to the console
             // console.log(`Files in ${repo.name}:`, files.data);
+
+            console.log(`Repo Access Granted for: ${repo.name}`);
+
         } catch (error) {
             console.error(`Error accessing files in ${repo.name}:`, error);
         }
