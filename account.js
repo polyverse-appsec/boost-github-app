@@ -46,20 +46,46 @@ async function saveInstallationInfo (accountName, installationId, username) {
     await dynamoDB.put(params).promise();
 }
 
-async function deleteInstallationInfo(accountName) {
-    // Delete from DynamoDB
-    const params = {
+async function deleteInstallationInfo(username, isOrg) {
+    // Query the Global Secondary Index to find the account
+    const queryParams = {
         TableName: installationsKeyValueStore,
-        Key: {
-            account: accountName,
+        IndexName: 'username-index',
+        KeyConditionExpression: 'username = :username',
+        ExpressionAttributeValues: {
+            ':username': username
         },
+        ProjectionExpression: 'account' // 'account' is the attribute for the email or org name
     };
 
     try {
-        await dynamoDB.delete(params).promise();
+        // we're going to lookup by username
+        let accountName = username;
+
+        // but if its not an org, we need to lookup the email - so we can find the username
+        if (!isOrg) {
+            const queryResult = await dynamoDB.query(queryParams).promise();
+            if (queryResult.Items.length === 0) {
+                console.log(`No installation info found for username: ${username}`);
+                return;
+            }
+
+            // Assuming the first item's 'account' attribute contains the email
+            accountName = queryResult.Items[0].account;
+        }
+
+        // Delete the item from the main table using the email
+        const deleteParams = {
+            TableName: installationsKeyValueStore,
+            Key: {
+                account: accountName
+            }
+        };
+
+        await dynamoDB.delete(deleteParams).promise();
         console.log(`Successfully deleted installation info for account: ${accountName}`);
     } catch (error) {
-        console.error(`Error deleting installation info:`, error);
+        console.error(`Error in processing deletion:`, error);
     }
 }
 

@@ -18,7 +18,9 @@ provider:
             - dynamodb:PutItem
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
-          Resource: "arn:aws:dynamodb:us-west-2:*:table/Boost.GitHub-App.installations"
+          Resource: 
+            - "arn:aws:dynamodb:us-west-2:*:table/Boost.GitHub-App.installations"
+            - "arn:aws:dynamodb:us-west-2:*:table/Boost.GitHub-App.installations/index/*"
         - Effect: "Allow"
           Action:
             - secretsmanager:GetSecretValue
