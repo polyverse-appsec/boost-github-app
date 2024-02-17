@@ -3,6 +3,17 @@ Polyverse Boost GitHub App
 
 # Release Notes
 
+## Version 0.3.1: January 14th, 2023
+
+### New Features
+- N/A
+
+### Enhancements
+- Enable GitHub App installation handler to retrieve primary/verified email address from GitHub API (not just email associated with Username)
+
+### Bug Fixes
+- N/A
+
 ## Version 0.3.0: January 14th, 2023
 
 ### New Features

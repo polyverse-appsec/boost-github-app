@@ -65,6 +65,18 @@ async function handleInstallationChange(app, method, payload) {
                 await saveInstallationInfo(userEmail, installationId, userInfo.data.login);
                 console.log(`Installation data saved to DynamoDB for User: ${userEmail}`);
             } else {
+                // Fetch the list of emails for the authenticated user
+                const response = await octokit.rest.users.listEmailsForAuthenticatedUser();
+                const primaryEmailObj = response.data.find(emailObj => emailObj.primary && emailObj.verified);
+
+                if (primaryEmailObj) {
+                    const primaryEmail = primaryEmailObj.email.toLowerCase();
+                    console.log(`Primary email for ${installingUser.login}: ${primaryEmail}`);
+                    await saveInstallationInfo(primaryEmail, installationId, installingUser.login);
+                    console.log(`Installation data saved to DynamoDB for User: ${primaryEmail}`);
+                } else {
+                    console.error(`No verified primary email found for: ${installingUser.login}`);
+                }
                 console.error(`User installation but no email info found for: ${installingUser.login}`);
             }
         }
