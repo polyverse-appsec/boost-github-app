@@ -3,7 +3,7 @@ Polyverse Boost GitHub App
 
 # Release Notes
 
-## Version 0.3.1: January 14th, 2023
+## Version 0.3.1: February 16th, 2023
 
 ### New Features
 - N/A
