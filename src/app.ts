@@ -12,6 +12,11 @@ const appFn = (app: Probot) => {
     });
 };
 
+const BoostGitHubAppId = "472802";
+const secretStore = 'boost/GitHubApp';
+const secretKeyPrivateKey = `${secretStore}/private-key`;
+const secretKeyWebhook = `${secretStore}/webhook`;
+
 const maximumInstallationCallbackDurationInSeconds = 20;
 
 async function handleInstallationChange(app: Probot, method: string, payload: any) {
@@ -97,7 +102,7 @@ async function handleInstallationChange(app: Probot, method: string, payload: an
             // Fetch repository details to get the default branch
             const repoDetails = await octokit.rest.repos.get({
                 owner: installingUser.login,
-                repo: repo
+                repo: repo.name
             });
     
             const privateRepo = repoDetails.data.private?repoDetails.data.private:false;
@@ -116,11 +121,6 @@ async function handleInstallationChange(app: Probot, method: string, payload: an
         }
     }
 }
-
-const BoostGitHubAppId = "472802";
-const secretStore = 'boost/GitHubApp';
-const secretKeyPrivateKey = `${secretStore}/private-key`;
-const secretKeyWebhook = `${secretStore}/webhook`;
 
 const initProbotApp = async () => {
     // Fetching secrets using AWS SDK v3
