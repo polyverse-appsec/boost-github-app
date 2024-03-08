@@ -28,7 +28,7 @@ provider:
 
 functions:
   probot:
-    handler: app.handler
+    handler: build/app.handler
     timeout: 29 # Lambda supports 15 minutes (900 seconds), but Serverless HTTP API only 30 seconds
     events:
       - http:

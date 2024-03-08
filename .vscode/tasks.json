@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+		{
+            "label": "build",
+			"type": "npm",
+			"script": "watch",
+			"problemMatcher": "$tsc-watch",
+			"isBackground": true,
+            "presentation": {
+                "reveal": "never",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+    ]
+}
+  

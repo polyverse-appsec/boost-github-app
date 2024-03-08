@@ -1,29 +1,20 @@
-// print the version of the app - from env variable APP_VERSION
+import { createNodeMiddleware, Probot } from "probot";
+import serverless from "serverless-http";
+import { getSecret } from "./secrets";
+import { saveInstallationInfo, deleteInstallationInfo } from "./account";
+
 console.log(`App version: ${process.env.APP_VERSION}`);
 
-const { createNodeMiddleware, Probot } = require('probot');
-const serverless = require('serverless-http');
-const { getSecret } = require('./secrets');
-const { saveInstallationInfo, deleteInstallationInfo } = require('./account');
-
-const appFn = (app ) => {
-    // Handle new installations
+const appFn = (app: Probot) => {
     app.on(['installation', 'installation_repositories'], async (context) => {
-        if (Buffer.isBuffer(context.payload)) {
-            context.payload = JSON.parse(context.payload.toString());
-        } else if (typeof context.payload === 'string') {
-            context.payload = JSON.parse(context.payload);
-        }
+        // Assuming context.payload is already parsed JSON in TypeScript version
         await handleInstallationChange(app, context.name, context.payload);
-
     });
-
 };
 
 const maximumInstallationCallbackDurationInSeconds = 20;
 
-async function handleInstallationChange(app, method, payload) {
-
+async function handleInstallationChange(app: Probot, method: string, payload: any) {
     const startTimeOfInstallationCallbackInSeconds = new Date().getTime() / 1000;
     const installationId = payload.installation.id;
     const installingUser = payload.installation.account; // Information about the user who installed the app
@@ -36,7 +27,7 @@ async function handleInstallationChange(app, method, payload) {
         try {
 
             // delete the data from DynamoDB to immediately block further access to GitHub by Boost backend
-            await deleteInstallationInfo(installingUser.login);
+            await deleteInstallationInfo(installingUser.login, targetType === 'Organization');
 
             console.log(`Installation data deleted from DynamoDB for account: ${installingUser.login}`);
         } catch (error) {
@@ -105,7 +96,7 @@ async function handleInstallationChange(app, method, payload) {
         try {
             // Fetch repository details to get the default branch
             const repoDetails = await octokit.rest.repos.get({
-                owner: owner,
+                owner: installingUser.login,
                 repo: repo
             });
     
@@ -114,7 +105,7 @@ async function handleInstallationChange(app, method, payload) {
 
             console.log(`Repo Access Granted for ${targetType} Repo: ${installingUser.login}: ${repo.name} (${privateRepo?"Private":"Public"}, Size: ${sizeOfRepo} kb)`);
 
-        } catch (error) {
+        } catch (error: any) {
             if (error.status === 404) {
                 console.warn(`${targetType} Repo may be empty - reporting not found: ${installingUser.login}: ${repo.name}`);
             } else if (error.response?.data) {
@@ -127,26 +118,22 @@ async function handleInstallationChange(app, method, payload) {
 }
 
 const BoostGitHubAppId = "472802";
-
 const secretStore = 'boost/GitHubApp';
-const secretKeyPrivateKey = secretStore + '/' + 'private-key';
-const secretKeyWebhook = secretStore + '/' + 'webhook';
+const secretKeyPrivateKey = `${secretStore}/private-key`;
+const secretKeyWebhook = `${secretStore}/webhook`;
 
-// Async function to initialize and start the Probot app
 const initProbotApp = async () => {
-    // Fetch secrets
+    // Fetching secrets using AWS SDK v3
     const privateKey = await getSecret(secretKeyPrivateKey);
     const webhookSecret = await getSecret(secretKeyWebhook);
 
     process.env.PRIVATE_KEY = privateKey;
     process.env.WEBHOOK_SECRET = webhookSecret;
-    // process.env.WEBHOOK_PROXY_URL = "https://smee.io/?????????";
 
-    // Initialize Probot with the secrets
     const probot = new Probot({
-        appId:BoostGitHubAppId,
-        privateKey: privateKey,
-        secret: webhookSecret,
+        appId: BoostGitHubAppId,
+        privateKey: process.env.PRIVATE_KEY,
+        secret: process.env.WEBHOOK_SECRET,
     });
 
     const middleware = createNodeMiddleware(appFn, { probot });
@@ -154,8 +141,7 @@ const initProbotApp = async () => {
 };
 
 // AWS Lambda handler
-module.exports.handler = async (event, context) => {
+export const handler = async (event: any, context: any) => {
     const probotServer = await initProbotApp();
-
     return probotServer(event, context);
 };

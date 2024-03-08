@@ -4,12 +4,18 @@
   "description": "Polyverse Boost for GitHub",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "watch": "tsc --watch -p ./",
+    "deploy": "serverless deploy"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.529.1",
+    "@aws-sdk/client-secrets-manager": "^3.529.1",
+    "@aws-sdk/lib-dynamodb": "^3.529.1",
     "@octokit/rest": "^20.0.2",
     "@octokit/webhooks": "^12.0.4",
     "aws-lambda": "^1.0.7",
@@ -17,7 +23,8 @@
     "express": "^4.18.2",
     "octokit": "^3.1.1",
     "probot": "^12.3.2",
-    "serverless-http": "^3.2.0"
+    "serverless-http": "^3.2.0",
+    "typescript": "^5.4.2"
   },
   "devDependencies": {
     "serverless-offline": "^13.2.1"
