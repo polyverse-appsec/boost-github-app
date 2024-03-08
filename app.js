@@ -88,21 +88,20 @@ async function handleInstallationChange(app, method, payload) {
     for (const repo of repositories) {
         const octokit = await app.auth(installationId);
 
-        // List files in the repository
         try {
-            const files = await octokit.rest.repos.getContent({
-                owner: installingUser.login,
-                repo: repo.name,
-                path: '' // Root directory
+            // Fetch repository details to get the default branch
+            const repoDetails = await octokit.rest.repos.get({
+                owner: owner,
+                repo: repo
             });
+    
+            const privateRepo = repoDetails.data.private?repoDetails.data.private:false;
+            const sizeOfRepo = repoDetails.data.size?repoDetails.data.size:0;
 
-            // for debugging, we can dump file info to the console
-            // console.log(`Files in ${repo.name}:`, files.data);
-
-            console.log(`Repo Access Granted for ${targetType} ${installingUser.login}: ${repo.name}`);
+            console.log(`Repo Access Granted for ${targetType} Repo: ${installingUser.login}: ${repo.name} (${privateRepo?"Private":"Public"}, Size: ${sizeOfRepo} kb)`);
 
         } catch (error) {
-            console.error(`Error accessing files in ${repo.name}:`, error);
+            console.error(`Error accessing files in ${repo.name}:`, (error.stack || error));
         }
     }
 }
