@@ -11,6 +11,8 @@ Polyverse Boost GitHub App
 ### Enhancements
 - Change default callback timeout from 6 seconds (default for Serverless) to 29 seconds - to accomodate large GitHub repo lists for new account installations
 - Significant speed up of GitHub org and user installation by skipping file content count - and only looking if Repo is accessible
+- Add a warning / guardrail in the Installation callback to ensure it completes within 20 seconds (if possible)
+    - If running long, the specific Repo access checks will be bypassed (no functional impact to user or org access)
 
 ### Bug Fixes
 - N/A

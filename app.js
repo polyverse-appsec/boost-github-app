@@ -20,7 +20,11 @@ const appFn = (app ) => {
 
 };
 
+const maximumInstallationCallbackDurationInSeconds = 20;
+
 async function handleInstallationChange(app, method, payload) {
+
+    const startTimeOfInstallationCallbackInSeconds = new Date().getTime() / 1000;
     const installationId = payload.installation.id;
     const installingUser = payload.installation.account; // Information about the user who installed the app
     const targetType = payload.installation.target_type; // Type of the account ("User" or "Organization")
@@ -83,9 +87,19 @@ async function handleInstallationChange(app, method, payload) {
     } catch (error) {
         console.error(`Error retrieving installation user info:`, error);
     }
-    const repositories = payload.repositories || payload.repositories_added;
 
+    const repositories = payload.repositories || payload.repositories_added;
+    console.log('Repository Count: ', repositories.length);
+
+    // the following code is used to scan all the Repos for debug/logging, but it is not necessary for the app to function
+    //      or the org or user to be correctly registered
     for (const repo of repositories) {
+        const secondsElapsedSinceCallbackStart = new Date().getTime() / 1000 - startTimeOfInstallationCallbackInSeconds;
+        if (secondsElapsedSinceCallbackStart > maximumInstallationCallbackDurationInSeconds) {
+            console.error(`Installation callback duration (29 seconds) may be exceeded; exiting Repo scan early (${secondsElapsedSinceCallbackStart} seconds) to avoid rude abort by Host`);
+            return;
+        }
+
         const octokit = await app.auth(installationId);
 
         try {
@@ -101,7 +115,7 @@ async function handleInstallationChange(app, method, payload) {
             console.log(`Repo Access Granted for ${targetType} Repo: ${installingUser.login}: ${repo.name} (${privateRepo?"Private":"Public"}, Size: ${sizeOfRepo} kb)`);
 
         } catch (error) {
-            console.error(`Error accessing files in ${repo.name}:`, (error.stack || error));
+            console.error(`Error checking ${targetType} Repo Access for ${installingUser.login}: ${repo.name}:`, (error.stack || error));
         }
     }
 }
