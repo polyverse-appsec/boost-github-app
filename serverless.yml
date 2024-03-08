@@ -6,7 +6,7 @@ provider:
   region: us-west-2
   stage: dev
   environment:
-    APP_VERSION: 0.3.0
+    APP_VERSION: ${file(./package.json):version}
   iam:
     role:
       statements:
@@ -29,6 +29,7 @@ provider:
 functions:
   probot:
     handler: app.handler
+    timeout: 29 # Lambda supports 15 minutes (900 seconds), but Serverless HTTP API only 30 seconds
     events:
       - http:
           path: /

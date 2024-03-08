@@ -3,6 +3,17 @@ Polyverse Boost GitHub App
 
 # Release Notes
 
+## Version 0.4.0: March 7th, 2023
+
+### New Features
+- N/A
+
+### Enhancements
+- Change default callback timeout from 6 seconds (default for Serverless) to 29 seconds - to accomodate large GitHub repo lists for new account installations
+
+### Bug Fixes
+- N/A
+
 ## Version 0.3.1: February 16th, 2023
 
 ### New Features
