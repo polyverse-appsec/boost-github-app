@@ -15,6 +15,7 @@ Polyverse Boost GitHub App
     - If running long, the specific Repo access checks will be bypassed (no functional impact to user or org access)
 - Improved logging for empty repos being detected
 - Move node.js version for App Host from v18 to v20
+- Move all code to TypeScript and AWS JavaScript v3
 
 ### Bug Fixes
 - N/A
