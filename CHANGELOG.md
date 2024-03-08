@@ -14,6 +14,7 @@ Polyverse Boost GitHub App
 - Add a warning / guardrail in the Installation callback to ensure it completes within 20 seconds (if possible)
     - If running long, the specific Repo access checks will be bypassed (no functional impact to user or org access)
 - Improved logging for empty repos being detected
+- Move node.js version for App Host from v18 to v20
 
 ### Bug Fixes
 - N/A
