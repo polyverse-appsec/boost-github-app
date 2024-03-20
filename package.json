@@ -1,6 +1,6 @@
 {
   "name": "boost-github-app",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Polyverse Boost for GitHub",
   "main": "app.js",
   "scripts": {
@@ -15,6 +15,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.529.1",
     "@aws-sdk/client-secrets-manager": "^3.529.1",
+    "@aws-sdk/client-ses": "^3.535.0",
     "@aws-sdk/lib-dynamodb": "^3.529.1",
     "@octokit/rest": "^20.0.2",
     "@octokit/webhooks": "^12.0.4",

@@ -3,6 +3,21 @@ Polyverse Boost GitHub App
 
 # Release Notes
 
+## Version 0.5.0: March 19th, 2023
+
+### New Features
+- Email notifications to monitoring@polyverse.com for:
+    - all GitHub App installations and deletions
+    - all GitHub App errors reading user information
+
+### Enhancements
+- Log full callstack if available for installation failures
+- Don't log the Repos for an Organization or User if we fail to install the App (extra privacy in logs)
+
+### Bug Fixes
+- Fix issue with Users with private emails raising an error and failing to install their GitHub App
+- Fix logging to avoid logging an ERROR when a successful User App installation completes
+
 ## Version 0.4.0: March 7th, 2023
 
 ### New Features
