@@ -42,7 +42,12 @@ export async function sendEmail(
 		},
 	};
 
-	try {
+    if (!process.env.EMAIL_NOTIFICATIONS) {
+        console.log(`Boost Service Send Email (disabled) from ${senderEmail} to ${recipientEmail}: ${subject} ${body}`);
+        return;
+    }
+
+    try {
 		const command = new SendEmailCommand(params);
 		const response: SendEmailResponse = await client.send(command);
 		console.log(

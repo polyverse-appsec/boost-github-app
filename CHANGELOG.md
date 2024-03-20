@@ -9,6 +9,7 @@ Polyverse Boost GitHub App
 - Email notifications to monitoring@polyverse.com for:
     - all GitHub App installations and deletions
     - all GitHub App errors reading user information
+    Only enabled if EMAIL_NOTIFICATIONS env variable is set for host
 
 ### Enhancements
 - Log full callstack if available for installation failures
