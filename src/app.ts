@@ -1,7 +1,7 @@
 import { createNodeMiddleware, Probot } from "probot";
 import serverless from "serverless-http";
 import { getSecret } from "./secrets";
-import { saveInstallationInfo, deleteInstallationInfo } from "./account";
+import { saveInstallationInfo, deleteInstallationInfo, getInstallationInfo } from "./account";
 import { sendMonitoringEmail } from "./email";
 
 console.log(`App version: ${process.env.APP_VERSION}`);
@@ -31,9 +31,17 @@ const secretKeyWebhook = `${secretStore}/webhook`;
 
 const maximumInstallationCallbackDurationInSeconds = 20;
 
-async function handleInstallationDelete(installingUser: any, targetType: string) {
+async function handleInstallationDelete(installingUser: any, targetType: string, sender: string) {
     // Call the function to delete installation info from DynamoDB
     try {
+
+        const existingInstallInfo = await getInstallationInfo(installingUser.login);
+        if (!existingInstallInfo) {
+            console.warn(`Installation data not found in Boost GitHub Database for account: ${installingUser.login}`);
+            return;
+        } else if (existingInstallInfo.owner && existingInstallInfo.owner !== sender) {
+            console.warn(`Installation data found in Boost GitHub Database for account: ${installingUser.login}, but requestor does not match owner: ${existingInstallInfo.owner}`);
+        }
 
         // delete the data from DynamoDB to immediately block further access to GitHub by Boost backend
         await deleteInstallationInfo(installingUser.login, targetType === 'Organization');
@@ -42,7 +50,8 @@ async function handleInstallationDelete(installingUser: any, targetType: string)
         await sendMonitoringEmail(`GitHub App Deleted ${targetType}: ${installingUser.login}`,
             `Installation data deleted from Boost GitHub Database\n` +
             `\t* Type: ${targetType}\n` +
-            `\t* Account: ${installingUser.login}`);
+            `\t* Account: ${installingUser.login}\n` +
+            `\t* Requestor: ${sender}`);
     } catch (error: any) {
         console.error(`Error deleting installation info from DynamoDB:`, error.callstack || error);
         await sendMonitoringEmail(`GitHub App Deletion Failure (${targetType}): ${installingUser.login}`,
@@ -50,6 +59,7 @@ async function handleInstallationDelete(installingUser: any, targetType: string)
             `\t* Date: ${usFormatter.format(new Date())}\n` +
             `\t* Type: ${targetType}\n` +
             `\t* Account: ${installingUser.login}\n` +
+            `\t* Requestor: ${sender}\n` +
             `Error: ${JSON.stringify(error.stack || error)}`);
     }
 }
@@ -57,6 +67,7 @@ async function handleInstallationDelete(installingUser: any, targetType: string)
 async function handleInstallationChange(app: Probot, method: string, payload: any) {
     const startTimeOfInstallationCallbackInSeconds = new Date().getTime() / 1000;
     const installationId = payload.installation.id;
+    const sender = payload.sender.login;
     const installingUser = payload.installation.account; // Information about the user who installed the app
     const targetType = payload.installation.target_type; // Type of the account ("User" or "Organization")
 
@@ -64,12 +75,12 @@ async function handleInstallationChange(app: Probot, method: string, payload: an
 
     if (payload.action === "deleted") {
         
-        await handleInstallationDelete(installingUser, targetType);
+        await handleInstallationDelete(installingUser, targetType, sender);
 
         return;
     }
 
-    const retrievedUser : boolean = await getUserInformation(app, installationId, installingUser, targetType);
+    const retrievedUser : boolean = await getUserInformation(app, installationId, installingUser, sender, targetType);
 
     // don't log the repo info if we failed to get the user info, since we don't really have verified access
     //      so let's not put extra repo info in log
@@ -84,7 +95,10 @@ async function getUserInformation(
     app: Probot,
     installationId: number,
     installingUser: any,
+    sender: string,
     targetType: string) : Promise<boolean> {
+
+    console.info(`getUserInformation: User: ${installingUser.login}, Type: ${targetType}, Installation: ${installationId}, Sender: ${sender}`)
    
         // Get user information, including email address
     try {
@@ -93,13 +107,17 @@ async function getUserInformation(
         // Determine if the installation is for a user or an organization
         if (targetType === 'Organization') {
             console.log(`Organization Installation: ${installingUser.login}`);
-            await saveInstallationInfo(installingUser.login, installationId.toString(), installingUser.login);
+            await saveInstallationInfo(installingUser.login, installationId.toString(), installingUser.login,
+                sender,
+                `${sender} Added Organization at ${usFormatter.format(new Date())}`);
             console.log(`Installation data saved to DynamoDB for Organization: ${installingUser.login}`);
 
             await sendMonitoringEmail(`GitHub App Installation: Organization: ${installingUser.login}`,
                 `Installation data saved to Boost GitHub Database for Organization: ${installingUser.login}\n` +
-                `\t* Date: ${usFormatter.format(new Date())}`);
+                `\t* Date: ${usFormatter.format(new Date())}\n` +
+                `\t* Requestor: ${sender}`);
         } else if (targetType === 'User') {
+            console.log(`${installingUser.login}:users.getByUsername lookup`);
             const userInfo = await octokit.rest.users.getByUsername({
                 username: installingUser.login,
             });
@@ -107,30 +125,45 @@ async function getUserInformation(
             if (userInfo.data.email) {
                 const userEmail = userInfo.data.email.toLowerCase();
                 console.log(`User Installation: ${userInfo.data.login}, Email: ${userEmail}`);
-                await saveInstallationInfo(userEmail, installationId.toString(), userInfo.data.login);
-                console.log(`Installation data saved to DynamoDB for User: ${userEmail}`);
+                await saveInstallationInfo(userEmail, installationId.toString(), userInfo.data.login,
+                    sender,
+                    `${sender} Added Public Email at ${usFormatter.format(new Date())}`);
+                console.log(`Installation data saved to DynamoDB for User ${userInfo.data.login}: Public: ${userEmail}`);
 
                 await sendMonitoringEmail(`GitHub App Installation: User: ${userInfo.data.login}`,
                     `Installation data saved to Boost GitHub Database for User: ${userInfo.data.login}\n` +
                     `\t* Date: ${usFormatter.format(new Date())}\n` +
-                    `\t* Email: ${userEmail}`);
+                    `\t* Email (Public): ${userEmail}\n` +
+                    `\t* Requestor: ${sender}`);
             } else {
-                // Fetch the list of emails for the authenticated user
-                const response = await octokit.rest.users.listEmailsForAuthenticatedUser();
-                const primaryEmailObj = response.data.find(emailObj => emailObj.primary && emailObj.verified);
+                let primaryEmail = '';
+                try {
+                    // Fetch the list of emails for the authenticated user from github
+                    const response = await octokit.rest.users.listEmailsForAuthenticatedUser();
+                    const primaryEmailObj = response.data.find(emailObj => emailObj.primary && emailObj.verified);
+                    primaryEmail = primaryEmailObj?primaryEmailObj.email.toLowerCase():'';
+                } catch (error: any) {
+                    console.warn(`Error fetching primary email for ${installingUser.login}:`, error.stack || error);
+                }
+                if (primaryEmail) {
+                    console.log(`Primary Verified email for ${installingUser.login}: ${primaryEmail}`);
 
-                if (primaryEmailObj) {
-                    const primaryEmail = primaryEmailObj.email.toLowerCase();
-                    console.log(`Primary email for ${installingUser.login}: ${primaryEmail}`);
-
-                    await saveInstallationInfo(primaryEmail, installationId.toString(), installingUser.login);
+                    await saveInstallationInfo(primaryEmail, installationId.toString(), installingUser.login,
+                        sender,
+                        `${sender} Added Primary Verified email at ${usFormatter.format(new Date())}`);
 
                     await sendMonitoringEmail(`GitHub App Installation: User: ${installingUser.login}`,
                         `Installation data saved to Boost GitHub Database for User: ${installingUser.login}\n` +
                         `\t* Date: ${usFormatter.format(new Date())}\n` +
-                        `\t* Email: ${primaryEmail}`);
+                        `\t* Email (Primary Verified): ${primaryEmail}\n` +
+                        `\t* Requestor: ${sender}`);
                 } else {
-                    console.error(`No verified primary email found for: ${installingUser.login}`);
+                    const noPrimaryEmailAddress = "";
+                    const installedUser = await saveInstallationInfo(noPrimaryEmailAddress, installationId.toString(), installingUser.login,
+                        sender,
+                        `No verified primary email found for: ${installingUser.login} by ${sender} at ${usFormatter.format(new Date())}`);
+
+                    console.error(`No public verified primary email found for: ${installingUser.login} by ${sender}`);
                 }
             }
         }
@@ -141,6 +174,7 @@ async function getUserInformation(
             `Failed to get user information for installation\n` +
             `\t* Date: ${usFormatter.format(new Date())}\n` +
             `\t* Type: ${targetType}\n` +
+            `\t* Requestor: ${sender}\n` +
             `\t* Account: ${installingUser.login}\n` +
             `\t* Error: ${JSON.stringify(error.stack || error)}`);
         return false;

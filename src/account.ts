@@ -9,6 +9,8 @@ const installationsKeyValueStore = 'Boost.GitHub-App.installations';
 interface InstallationInfo {
     installationId?: string;
     username?: string;
+    owner?: string;
+    details?: string;
 }
 
 export async function getInstallationInfo(accountName: string): Promise<InstallationInfo | undefined> {
@@ -23,7 +25,7 @@ export async function getInstallationInfo(accountName: string): Promise<Installa
         const { Item } = await dynamoDB.send(new GetCommand(params));
 
         if (Item) {
-            return { installationId: Item.installationId, username: Item.username };
+            return { installationId: Item.installationId, username: Item.username , owner: Item.owner, details: Item.details};
         }
     } catch (error) {
         console.error(`Error retrieving installation user info:`, error);
@@ -31,13 +33,20 @@ export async function getInstallationInfo(accountName: string): Promise<Installa
     return undefined;
 }
 
-export async function saveInstallationInfo(accountName: string, installationId: string, username: string): Promise<void> {
+export async function saveInstallationInfo(
+    accountName: string,
+    installationId: string,
+    username: string,
+    owner: string,
+    installMessage: string): Promise<void> {
     const params = {
         TableName: installationsKeyValueStore,
         Item: {
             account: accountName,
             installationId,
             username,
+            owner,
+            details : installMessage,
         },
     };
     await dynamoDB.send(new PutCommand(params));

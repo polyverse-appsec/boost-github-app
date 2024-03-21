@@ -3,7 +3,7 @@ Polyverse Boost GitHub App
 
 # Release Notes
 
-## Version 0.5.0: March 19th, 2023
+## Version 0.5.0: March 21st, 2024
 
 ### New Features
 - Email notifications to monitoring@polyverse.com for:
@@ -14,12 +14,14 @@ Polyverse Boost GitHub App
 ### Enhancements
 - Log full callstack if available for installation failures
 - Don't log the Repos for an Organization or User if we fail to install the App (extra privacy in logs)
+- Report the Sender of an Application Install (GitHub Username) so we know which User installed a GitHub App
+- When Deleting an Install, add a Warning if the Delete Sender is not the same as the Install Sender
 
 ### Bug Fixes
 - Fix issue with Users with private emails raising an error and failing to install their GitHub App
 - Fix logging to avoid logging an ERROR when a successful User App installation completes
 
-## Version 0.4.0: March 7th, 2023
+## Version 0.4.0: March 7th, 2024
 
 ### New Features
 - N/A
@@ -36,7 +38,7 @@ Polyverse Boost GitHub App
 ### Bug Fixes
 - N/A
 
-## Version 0.3.1: February 16th, 2023
+## Version 0.3.1: February 16th, 2024
 
 ### New Features
 - N/A
@@ -47,7 +49,7 @@ Polyverse Boost GitHub App
 ### Bug Fixes
 - N/A
 
-## Version 0.3.0: January 14th, 2023
+## Version 0.3.0: January 14th, 2024
 
 ### New Features
 - Add persistence of Installation info in AWS Dynamo
