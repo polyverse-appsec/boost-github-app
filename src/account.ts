@@ -11,9 +11,11 @@ interface InstallationInfo {
     username?: string;
     owner?: string;
     details?: string;
+    lastUpdated?: number;
+    authToken?: string;
 }
 
-export async function getInstallationInfo(accountName: string): Promise<InstallationInfo | undefined> {
+export async function getUser(accountName: string): Promise<InstallationInfo | undefined> {
     try {
         const params = {
             TableName: installationsKeyValueStore,
@@ -25,7 +27,14 @@ export async function getInstallationInfo(accountName: string): Promise<Installa
         const { Item } = await dynamoDB.send(new GetCommand(params));
 
         if (Item) {
-            return { installationId: Item.installationId, username: Item.username , owner: Item.owner, details: Item.details};
+            return {
+                installationId: Item.installationId,
+                username: Item.username,
+                owner: Item.owner,
+                details: Item.details,
+                lastUpdated: Item.lastUpdated,
+                authToken: Item.authToken
+            };
         }
     } catch (error) {
         console.error(`Error retrieving installation user info:`, error);
@@ -33,12 +42,13 @@ export async function getInstallationInfo(accountName: string): Promise<Installa
     return undefined;
 }
 
-export async function saveInstallationInfo(
+export async function saveUser(
     accountName: string,
     installationId: string,
     username: string,
     owner: string,
-    installMessage: string): Promise<void> {
+    installMessage: string,
+    authToken: string = ""): Promise<void> {
     const params = {
         TableName: installationsKeyValueStore,
         Item: {
@@ -47,12 +57,14 @@ export async function saveInstallationInfo(
             username,
             owner,
             details : installMessage,
+            lastUpdated: Math.round(Date.now() / 1000),
+            authToken
         },
     };
     await dynamoDB.send(new PutCommand(params));
 }
 
-export async function deleteInstallationInfo(username: string, isOrg: boolean): Promise<void> {
+export async function deleteUser(username: string, isOrg: boolean): Promise<void> {
     const queryParams = {
         TableName: installationsKeyValueStore,
         IndexName: 'username-index',

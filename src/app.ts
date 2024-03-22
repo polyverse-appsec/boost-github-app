@@ -1,7 +1,7 @@
 import { createNodeMiddleware, Probot } from "probot";
 import serverless from "serverless-http";
 import { getSecret } from "./secrets";
-import { saveInstallationInfo, deleteInstallationInfo, getInstallationInfo } from "./account";
+import { saveUser, deleteUser, getUser } from "./account";
 import { sendMonitoringEmail } from "./email";
 
 console.log(`App version: ${process.env.APP_VERSION}`);
@@ -30,6 +30,8 @@ const secretKeyPrivateKey = `${secretStore}/private-key`;
 const secretKeyWebhook = `${secretStore}/webhook`;
 
 const maximumInstallationCallbackDurationInSeconds = 20;
+
+const userAppInstallFailurePrefix = `!`;
 
 async function handleInstallationDelete(installingUser: any, targetType: string, sender: string) {
     // Call the function to delete installation info from DynamoDB
@@ -107,7 +109,7 @@ async function getUserInformation(
         // Determine if the installation is for a user or an organization
         if (targetType === 'Organization') {
             console.log(`Organization Installation: ${installingUser.login}`);
-            await saveInstallationInfo(installingUser.login, installationId.toString(), installingUser.login,
+            await saveUser(installingUser.login, installationId.toString(), installingUser.login,
                 sender,
                 `${sender} Added Organization at ${usFormatter.format(new Date())}`);
             console.log(`Installation data saved to DynamoDB for Organization: ${installingUser.login}`);
@@ -125,9 +127,16 @@ async function getUserInformation(
             if (userInfo.data.email) {
                 const userEmail = userInfo.data.email.toLowerCase();
                 console.log(`User Installation: ${userInfo.data.login}, Email: ${userEmail}`);
-                await saveInstallationInfo(userEmail, installationId.toString(), userInfo.data.login,
+                await saveUser(userEmail, installationId.toString(), userInfo.data.login,
                     sender,
                     `${sender} Added Public Email at ${usFormatter.format(new Date())}`);
+                
+                const erroredUserInfo = await getUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
+                if (erroredUserInfo) {
+                    await deleteUser(`${userAppInstallFailurePrefix}${installingUser.login}`, false);
+                    console.log(`Installation data deleted from Boost GitHub Database for User ${userInfo.data.login}`);
+                }
+
                 console.log(`Installation data saved to DynamoDB for User ${userInfo.data.login}: Public: ${userEmail}`);
 
                 await sendMonitoringEmail(`GitHub App Installation: User: ${userInfo.data.login}`,
@@ -148,9 +157,15 @@ async function getUserInformation(
                 if (primaryEmail) {
                     console.log(`Primary Verified email for ${installingUser.login}: ${primaryEmail}`);
 
-                    await saveInstallationInfo(primaryEmail, installationId.toString(), installingUser.login,
+                    await saveUser(primaryEmail, installationId.toString(), installingUser.login,
                         sender,
                         `${sender} Added Primary Verified email at ${usFormatter.format(new Date())}`);
+
+                    const erroredUserInfo = await getUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
+                    if (erroredUserInfo) {
+                        await deleteUser(`${userAppInstallFailurePrefix}${installingUser.login}`, false);
+                        console.log(`Installation data deleted from Boost GitHub Database for User ${installingUser.login}`);
+                    }
 
                     await sendMonitoringEmail(`GitHub App Installation: User: ${installingUser.login}`,
                         `Installation data saved to Boost GitHub Database for User: ${installingUser.login}\n` +
@@ -158,8 +173,7 @@ async function getUserInformation(
                         `\t* Email (Primary Verified): ${primaryEmail}\n` +
                         `\t* Requestor: ${sender}`);
                 } else {
-                    const noPrimaryEmailAddress = `!${installingUser.login}`;
-                    await saveInstallationInfo(noPrimaryEmailAddress, installationId.toString(), installingUser.login,
+                    await saveUser(`${userAppInstallFailurePrefix}${installingUser.login}`, installationId.toString(), installingUser.login,
                         sender,
                         `No verified primary email found for: ${installingUser.login} by ${sender} at ${usFormatter.format(new Date())}`);
 
