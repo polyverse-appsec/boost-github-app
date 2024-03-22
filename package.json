@@ -28,6 +28,6 @@
     "typescript": "^5.4.2"
   },
   "devDependencies": {
-    "serverless-offline": "^13.2.1"
+    "serverless-offline": "^13.3.3"
   }
 }
