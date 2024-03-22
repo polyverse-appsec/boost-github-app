@@ -158,8 +158,8 @@ async function getUserInformation(
                         `\t* Email (Primary Verified): ${primaryEmail}\n` +
                         `\t* Requestor: ${sender}`);
                 } else {
-                    const noPrimaryEmailAddress = "";
-                    const installedUser = await saveInstallationInfo(noPrimaryEmailAddress, installationId.toString(), installingUser.login,
+                    const noPrimaryEmailAddress = `!${installingUser.login}`;
+                    await saveInstallationInfo(noPrimaryEmailAddress, installationId.toString(), installingUser.login,
                         sender,
                         `No verified primary email found for: ${installingUser.login} by ${sender} at ${usFormatter.format(new Date())}`);
 
