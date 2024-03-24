@@ -14,14 +14,19 @@ const appFn = (app: Probot) => {
 };
 
 // for pretty printing dates in error messages and logs
+// print the date in PST with 12-hour time
 export const usFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+
     year: 'numeric',
     month: 'long',
     day: '2-digit',
+
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: true,
+    
+    hour12: true
 });
 
 const BoostGitHubAppId = "472802";
