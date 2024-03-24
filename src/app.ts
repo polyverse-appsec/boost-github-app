@@ -37,7 +37,7 @@ async function handleInstallationDelete(installingUser: any, targetType: string,
     // Call the function to delete installation info from DynamoDB
     try {
 
-        const existingInstallInfo = await getUser(installingUser.login);
+        const existingInstallInfo = await getAccountByUsername(installingUser.login);
         if (!existingInstallInfo) {
             console.warn(`Installation data not found in Boost GitHub Database for account: ${installingUser.login}`);
 
