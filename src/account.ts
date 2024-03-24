@@ -65,17 +65,17 @@ export async function getUser(accountName: string): Promise<UserInfo | undefined
 export async function saveUser(
     accountName: string,
     username: string,
-    installMessage: string,
+    details: string,
     installationId?: string,
     owner?: string,
     authToken?: string): Promise<void> {
     try {
         // Build the update expression dynamically based on provided arguments
-        let updateExpression = "set lastUpdated = :lastUpdated, username = :username, details = :installMessage";
+        let updateExpression = "set lastUpdated = :lastUpdated, username = :username, details = :details";
         let expressionAttributeValues: any = {
             ":lastUpdated": Math.round(Date.now() / 1000),
             ":username": username,
-            ":details": installMessage
+            ":details": details
         };
 
         if (installationId) {
@@ -184,8 +184,8 @@ export async function updateUser(accountName: string, updatedInfo: UserInfo): Pr
     }
 
     if ('details' in updatedInfo && updatedInfo.details !== undefined) {
-        updateExpression += ", details = :installMessage";
-        expressionAttributeValues[":installMessage"] = updatedInfo.details;
+        updateExpression += ", details = :details";
+        expressionAttributeValues[":details"] = updatedInfo.details;
         needsUpdate = true;
     }
 
