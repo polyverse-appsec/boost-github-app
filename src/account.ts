@@ -165,32 +165,43 @@ export async function deleteUser(accountName: string): Promise<void> {
 }
 
 export async function updateUser(accountName: string, updatedInfo: UserInfo): Promise<void> {
-    let updateExpression = "set lastUpdated = :lastUpdated";
-    let expressionAttributeValues : any = {
+    let updateParts: string[] = ["lastUpdated = :lastUpdated"];
+    let removeParts: string[] = [];
+    let expressionAttributeValues: any = {
         ":lastUpdated": Math.round(Date.now() / 1000),
     };
-    let needsUpdate = false;
 
-    // Dynamically add fields to update based on what's present in updatedInfo
-    if ('authToken' in updatedInfo && updatedInfo.authToken !== undefined) {
-        updateExpression += ", authToken = :authToken";
-        expressionAttributeValues[":authToken"] = updatedInfo.authToken;
-        needsUpdate = true;
-    }
-    if ('installationId' in updatedInfo && updatedInfo.installationId !== undefined) {
-        updateExpression += ", installationId = :installationId";
-        expressionAttributeValues[":installationId"] = updatedInfo.installationId;
-        needsUpdate = true;
+    // Handling authToken
+    if (updatedInfo.hasOwnProperty('authToken')) {
+        if (updatedInfo.authToken !== undefined) {
+            updateParts.push("authToken = :authToken");
+            expressionAttributeValues[":authToken"] = updatedInfo.authToken;
+        } else {
+            removeParts.push("authToken");
+        }
     }
 
-    if ('details' in updatedInfo && updatedInfo.details !== undefined) {
-        updateExpression += ", details = :details";
-        expressionAttributeValues[":details"] = updatedInfo.details;
-        needsUpdate = true;
+    // Handling installationId
+    if (updatedInfo.hasOwnProperty('installationId')) {
+        if (updatedInfo.installationId !== undefined) {
+            updateParts.push("installationId = :installationId");
+            expressionAttributeValues[":installationId"] = updatedInfo.installationId;
+        } else {
+            removeParts.push("installationId");
+        }
     }
 
-    if (!needsUpdate) {
-        console.warn(`No updates needed for user info for account: ${accountName} - ${JSON.stringify(updatedInfo)}`);
+    // Construct UpdateExpression
+    let updateExpression = "";
+    if (updateParts.length > 0) {
+        updateExpression += "SET " + updateParts.join(", ");
+    }
+    if (removeParts.length > 0) {
+        updateExpression += (updateParts.length ? " " : "") + "REMOVE " + removeParts.join(", ");
+    }
+
+    if (updateParts.length === 1 && removeParts.length === 0) {
+        console.warn(`No updates needed for user info for account: ${accountName}`);
         return;
     }
 
@@ -199,13 +210,13 @@ export async function updateUser(accountName: string, updatedInfo: UserInfo): Pr
             TableName: githubAppUserKeyValueStore,
             Key: { account: accountName },
             UpdateExpression: updateExpression,
-            ExpressionAttributeValues: expressionAttributeValues
+            ExpressionAttributeValues: updateParts.length > 1 ? expressionAttributeValues : undefined,
         };
 
         await dynamoDB.update(updateParams);
-        console.log(`Successfully updated user info for account: ${accountName} - ${JSON.stringify(updatedInfo)}`);
-    } catch (error: any) {
-        console.error(`Error in updating user info for account: ${accountName} - ${JSON.stringify(updatedInfo)}`, error.stack || error);
+        console.log(`Successfully updated user info for account: ${accountName}`);
+    } catch (error) {
+        console.error(`Error in updating user info for account: ${accountName}`, error);
     }
 }
 
