@@ -131,7 +131,7 @@ export async function deleteUserByUsername(username: string, requestor: string, 
             if (deleteInstallationInfoOnly) {
                 await updateUser(accountName, {
                     username: username,
-                    installationId: "",
+                    installationId: undefined,
                     details: `Installation info deleted for username: ${username} by ${requestor}`
                 });
                 console.log(`Successfully deleted installation info for account: ${accountName} for username: ${username}`);
@@ -189,6 +189,15 @@ export async function updateUser(accountName: string, updatedInfo: UserInfo): Pr
         } else {
             removeParts.push("installationId");
         }
+    }
+
+    // Handling details
+    if (updatedInfo.hasOwnProperty('details') && updatedInfo.details !== undefined) {
+        updateParts.push("details = :details");
+        expressionAttributeValues[":details"] = updatedInfo.details;
+    } else {
+        updateParts.push("details = :details");
+        expressionAttributeValues[":details"] = `Updated at ${new Date().toISOString()}`;
     }
 
     // Construct UpdateExpression
