@@ -47,7 +47,7 @@ async function handleInstallationDelete(installingUser: any, targetType: string,
         }
 
             // only delete the install info, not the entire user profile
-        await deleteUserByUsername(installingUser.login, true);
+        await deleteUserByUsername(installingUser.login, sender, true);
 
         const existingInstallErrorInfo = await getUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
         if (existingInstallErrorInfo) {
@@ -101,11 +101,11 @@ async function handleInstallationChange(app: Probot, method: string, payload: an
 }
 
 async function getAccountName(app: Probot, installationId: number, sender: string, installingUser: any): Promise<string | undefined> {
-    const existingAccountName = await getAccountByUsername(installingUser.login);
+    const existingAccount = await getAccountByUsername(installingUser.login);
     // if we have an email address for the account, then return that
-    if (existingAccountName !== undefined) {
-        console.info(`Found existing account info for Username ${installingUser.login}: ${existingAccountName}`);
-        return existingAccountName;
+    if (existingAccount !== undefined && existingAccount.account) {
+        console.info(`Found existing account info for Username ${installingUser.login}: ${existingAccount.account}`);
+        return existingAccount.account;
     }
 
     const octokit = await app.auth(installationId);

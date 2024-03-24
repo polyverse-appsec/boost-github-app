@@ -8,6 +8,7 @@ const githubAppUserKeyValueStore = 'Boost.GitHub-App.installations';
 const reverseAccountLookupByUsernameSecondaryIndex = 'username-index';
 
 interface UserInfo {
+    account?: string;
     installationId?: string;
     username: string;
     owner?: string;
@@ -16,7 +17,7 @@ interface UserInfo {
     authToken?: string;
 }
 
-export async function getAccountByUsername(username: string): Promise<string | undefined> {
+export async function getAccountByUsername(username: string): Promise<UserInfo | undefined> {
     try {
         const params = {
             TableName: githubAppUserKeyValueStore,
@@ -32,7 +33,7 @@ export async function getAccountByUsername(username: string): Promise<string | u
             // look for user info where the account is an email address
             for (const user of item.Items) {
                 if (user.account.includes('@')) {
-                    return user.account;
+                    return user as UserInfo;
                 }
             }
         }
@@ -74,7 +75,7 @@ export async function saveUser(
         let expressionAttributeValues: any = {
             ":lastUpdated": Math.round(Date.now() / 1000),
             ":username": username,
-            ":installMessage": installMessage
+            ":details": installMessage
         };
 
         if (installationId) {
@@ -105,7 +106,7 @@ export async function saveUser(
     }
 }
 
-export async function deleteUserByUsername(username: string, deleteInstallationInfoOnly: boolean = false): Promise<void> {
+export async function deleteUserByUsername(username: string, requestor: string, deleteInstallationInfoOnly: boolean = false): Promise<void> {
     try {
         // Query to find all accounts associated with the username
         //      - This is necessary because the username is not the primary key
@@ -128,7 +129,11 @@ export async function deleteUserByUsername(username: string, deleteInstallationI
         for (const item of queryResult.Items) {
             const accountName = item.account;
             if (deleteInstallationInfoOnly) {
-                await updateUser(accountName, { username: username, installationId: "" });
+                await updateUser(accountName, {
+                    username: username,
+                    installationId: "",
+                    details: `Installation info deleted for username: ${username} by ${requestor}`
+                });
                 console.log(`Successfully deleted installation info for account: ${accountName} for username: ${username}`);
             } else {
                 try {
@@ -164,15 +169,29 @@ export async function updateUser(accountName: string, updatedInfo: UserInfo): Pr
     let expressionAttributeValues : any = {
         ":lastUpdated": Math.round(Date.now() / 1000),
     };
+    let needsUpdate = false;
 
     // Dynamically add fields to update based on what's present in updatedInfo
     if ('authToken' in updatedInfo && updatedInfo.authToken !== undefined) {
         updateExpression += ", authToken = :authToken";
         expressionAttributeValues[":authToken"] = updatedInfo.authToken;
+        needsUpdate = true;
     }
     if ('installationId' in updatedInfo && updatedInfo.installationId !== undefined) {
         updateExpression += ", installationId = :installationId";
         expressionAttributeValues[":installationId"] = updatedInfo.installationId;
+        needsUpdate = true;
+    }
+
+    if ('details' in updatedInfo && updatedInfo.details !== undefined) {
+        updateExpression += ", details = :installMessage";
+        expressionAttributeValues[":installMessage"] = updatedInfo.details;
+        needsUpdate = true;
+    }
+
+    if (!needsUpdate) {
+        console.warn(`No updates needed for user info for account: ${accountName} - ${JSON.stringify(updatedInfo)}`);
+        return;
     }
 
     try {
