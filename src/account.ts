@@ -11,7 +11,7 @@ interface UserInfo {
     account?: string;
     installationId?: string;
     username: string;
-    owner?: string;
+    admin?: string;
     details?: string;
     lastUpdated?: number;
     authToken?: string;
@@ -67,7 +67,7 @@ export async function saveUser(
     username: string,
     details: string,
     installationId?: string,
-    owner?: string,
+    admin?: string,
     authToken?: string): Promise<void> {
     try {
         // Build the update expression dynamically based on provided arguments
@@ -82,9 +82,9 @@ export async function saveUser(
             updateExpression += ", installationId = :installationId";
             expressionAttributeValues[":installationId"] = installationId;
         }
-        if (owner) {
-            updateExpression += ", owner = :owner";
-            expressionAttributeValues[":owner"] = owner;
+        if (admin) {
+            updateExpression += ", admin = :admin";
+            expressionAttributeValues[":admin"] = admin;
         }
         if (authToken) {
             updateExpression += ", authToken = :authToken";

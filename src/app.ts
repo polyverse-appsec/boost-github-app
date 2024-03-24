@@ -42,8 +42,8 @@ async function handleInstallationDelete(installingUser: any, targetType: string,
             console.warn(`Installation data not found in Boost GitHub Database for account: ${installingUser.login}`);
 
             // we'll continue to call delete in case there are placeholder accounts under the same login (E.g. unknown email key)
-        } else if (existingInstallInfo.owner && existingInstallInfo.owner !== sender) {
-            console.warn(`Installation data found in Boost GitHub Database for account: ${installingUser.login}, but requestor does not match owner: ${existingInstallInfo.owner}`);
+        } else if (existingInstallInfo.admin && existingInstallInfo.admin !== sender) {
+            console.warn(`Installation data found in Boost GitHub Database for account: ${installingUser.login}, but requestor ${sender} does not match admin: ${existingInstallInfo.admin}`);
         }
 
             // only delete the install info, not the entire user profile
