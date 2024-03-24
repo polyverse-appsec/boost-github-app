@@ -154,9 +154,9 @@ async function getUserInformation(
         // Determine if the installation is for a user or an organization
         if (targetType === 'Organization') {
             console.log(`Organization Installation: ${installingUser.login}`);
-            await saveUser(installingUser.login, installationId.toString(), installingUser.login,
-                sender,
-                `${sender} Added Organization at ${usFormatter.format(new Date())}`);
+            await saveUser(installingUser.login, installingUser.login,
+                `${sender} Added Organization at ${usFormatter.format(new Date())}`,
+                installationId.toString(), sender,);
             console.log(`Installation data saved to DynamoDB for Organization: ${installingUser.login}`);
 
             await sendMonitoringEmail(`GitHub App Installation: Organization: ${installingUser.login}`,
@@ -167,15 +167,15 @@ async function getUserInformation(
             const accountName = await getAccountName(app, installationId, sender, installingUser);
 
             if (!accountName) {
-                await saveUser(`${userAppInstallFailurePrefix}${installingUser.login}`, installationId.toString(), installingUser.login,
-                    sender,
-                    `No verified primary email found for: ${installingUser.login} by ${sender} at ${usFormatter.format(new Date())}`);
+                await saveUser(`${userAppInstallFailurePrefix}${installingUser.login}`, installingUser.login,
+                    `No verified primary email found for: ${installingUser.login} by ${sender} at ${usFormatter.format(new Date())}`,
+                    installationId.toString(), sender);
 
                 console.error(`No verified primary email found for: ${installingUser.login} by ${sender}`);
             } else {
-                await saveUser(accountName, installationId.toString(), installingUser.login,
-                    sender,
-                    `${sender} Added User at ${usFormatter.format(new Date())}`);
+                await saveUser(accountName, installingUser.login,
+                    `${sender} Added User at ${usFormatter.format(new Date())}`,
+                    installationId.toString(), sender);
                 
                 // delete any placeholder error info for this user
                 const installErrorInfo = await getUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
