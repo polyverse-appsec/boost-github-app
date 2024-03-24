@@ -49,6 +49,12 @@ async function handleInstallationDelete(installingUser: any, targetType: string,
             // only delete the install info, not the entire user profile
         await deleteUserByUsername(installingUser.login, true);
 
+        const existingInstallErrorInfo = await getUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
+        if (existingInstallErrorInfo) {
+            await deleteUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
+            console.log(`Deleted placeholder error info for ${installingUser.login} - Error: ${JSON.stringify(existingInstallErrorInfo)}`);
+        }
+
         console.log(`Installation data deleted from Boost GitHub Database for account: ${installingUser.login} by ${sender}`);
         await sendMonitoringEmail(`GitHub App Deleted ${targetType}: ${installingUser.login}`,
             `Installation data deleted from Boost GitHub Database\n` +
@@ -175,6 +181,7 @@ async function getUserInformation(
                 const installErrorInfo = await getUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
                 if (installErrorInfo) {
                     await deleteUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
+                    console.info(`Deleted placeholder error info for ${installingUser.login} - Error: ${JSON.stringify(installErrorInfo)}`);
                 }
 
                 console.log(`Installation data saved to DynamoDB for ${accountName}: Username: ${installingUser.login} by ${sender}`);
