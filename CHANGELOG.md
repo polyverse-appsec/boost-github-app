@@ -3,6 +3,17 @@ Polyverse Boost GitHub App
 
 # Release Notes
 
+## Version 0.6.0: March 23rd, 2024
+
+### New Features
+- N/A
+
+### Enhancements
+- Delete only the installation info for user accounts (to preserve the email primary key info)
+
+### Bug Fixes
+- N/A
+
 ## Version 0.5.0: March 21st, 2024
 
 ### New Features
