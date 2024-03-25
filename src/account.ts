@@ -22,7 +22,8 @@ const usFormatter = new Intl.DateTimeFormat('en-US', {
     
     hour12: true
 });
-interface UserInfo {
+
+export interface UserInfo {
     account?: string;
     installationId?: string;
     username: string;
