@@ -363,7 +363,41 @@ async function sendDepartureEmail(accountEmail: string, installingUsername: stri
 }
 
 async function sendOrganizationDepartureEmail(accountEmail: string, installingOrg: string, sender: string) {
+    const imageUrl = "https://boost.polyverse.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FSara_Cartoon_Portrait.80bf5621.png&w=256&q=75";
 
+    const subject = `Sara is sad to see you go!`;
+    const htmlBody = `
+        <html>
+            <body>
+                <p><a href="https://github.com/apps/polyverse-boost">Boost GitHub App</a> by <a href="http://www.polyverse.com">Polyverse</a> has been uninstalled for GitHub.com Organization ${installingOrg} by ${sender} at ${usFormatter.format(new Date())}</p>
+                <img src="${imageUrl}" alt="Sara AI Architect" />
+                <p>Sara the AI Architect no longer has access to the software projects/repositories for ${installingOrg}.</p>
+                <p><a href="http://boost.polyverse.com/">http://boost.polyverse.com/</a></p>
+                <p></p>
+                <p>Sara would still love to help you analyze private GitHub.com repositories that you have access to, and achieve your organiation's most critical Goals and Tasks on your software projects.</p>
+                <p></p>
+                <p>If you would still like to use Sara with Boost AI by Polyverse, please reinstall the <a href="https://www.github.com/apps/polyverse-boost">Polyverse Boost app</a> from the GitHub Marketplace.</p>
+                <p>If you are having any issues with Sara or your account or GitHub repository access, please contact us right away at <a href="mailto:support@polyverse.com">support@polyverse.com</a>.</p>
+                <p>Sara and the entire Polyverse Team are ready to help when your organization is ready to use Sara with Boost AI again!</p>
+                <p></p>
+                <p>Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!</p>`;
+    const plainTextBody = `Boost GitHub App has been uninstalled for GitHub.com Organization ${installingOrg} by ${sender} at ${usFormatter.format(new Date())}\n` +
+        `\n` +
+        `\n` +
+        `Sara the AI Architect no longer has access to the software projects/repositories for ${installingOrg}.\n` +
+        `http://boost.polyverse.com/\n` +
+        `\n` +
+        `Sara would still love to help you analyze private GitHub.com repositories that you have access to, and achieve your organiation's most critical Goals and Tasks on your software projects.\n` +
+        `\n` +
+        `If you would still like to use Sara with Boost AI by Polyverse, please reinstall the Polyverse Boost app from the GitHub Marketplace.\n` +
+        `If you are having any issues with Sara or your account or GitHub repository access, please contact us right away at support@polyverse.com.\n` +
+        `Sara and the entire Polyverse Team are ready to help when your organization is ready to use Sara with Boost AI again!\n` +
+        `\n` +
+        `Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!`;
+
+    // Send a departure email to the organization
+    await sendHtmlEmail(subject, htmlBody, plainTextBody, accountEmail, PolyverseSupportEmail);
+}
 
 async function logRepoAccess(
     app: Probot,
