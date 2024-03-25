@@ -3,7 +3,7 @@ Polyverse Boost GitHub App
 
 # Release Notes
 
-## Version 0.6.0: March 23rd, 2024
+## Version 0.6.0: March 25th, 2024
 
 ### New Features
 - Welcome and Departure emails are sent from the Boost GitHub App install service to users and org admins directing to Sara website
