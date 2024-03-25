@@ -6,7 +6,7 @@ Polyverse Boost GitHub App
 ## Version 0.6.0: March 23rd, 2024
 
 ### New Features
-- N/A
+- Welcome and Departure emails are sent from the Boost GitHub App install service to users and org admins directing to Sara website
 
 ### Enhancements
 - Delete only the installation info for user accounts (to preserve the email primary key info)

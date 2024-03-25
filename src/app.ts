@@ -2,7 +2,7 @@ import { createNodeMiddleware, Probot } from "probot";
 import serverless from "serverless-http";
 import { getSecret } from "./secrets";
 import { saveUser, deleteUserByUsername, deleteUser, getUser, getAccountByUsername } from "./account";
-import { sendMonitoringEmail } from "./email";
+import { sendHtmlEmail, sendMonitoringEmail, PolyverseSupportEmail } from "./email";
 
 console.log(`App version: ${process.env.APP_VERSION}`);
 
@@ -54,18 +54,38 @@ async function handleInstallationDelete(installingUser: any, targetType: string,
             // only delete the install info, not the entire user profile
         await deleteUserByUsername(installingUser.login, sender, true);
 
-        const existingInstallErrorInfo = await getUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
-        if (existingInstallErrorInfo) {
-            await deleteUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
-            console.log(`Deleted placeholder error info for ${installingUser.login} - Error: ${JSON.stringify(existingInstallErrorInfo)}`);
-        }
+        try {
+            if (targetType === 'Organization') {
+                const admin = existingInstallInfo?.admin;
+                if (admin) {
+                    const adminEmail = await getAccountByUsername(admin);
+                    if (adminEmail?.account && adminEmail.account.includes('@')) {
+                        await sendOrganizationDepartureEmail(adminEmail.account!, installingUser.login, sender);
+                    } else {
+                        console.error(`No admin email found for Organization: ${installingUser.login}`);
+                    }
+                } else {
+                    console.error(`No admin found for Organization: ${installingUser.login}`);
+                }
+            } else {
+                if (existingInstallInfo?.account && existingInstallInfo.account.includes('@')) {
+                    await sendDepartureEmail(existingInstallInfo.account!, installingUser.login, sender);
+                }
+            }
 
-        console.log(`Installation data deleted from Boost GitHub Database for account: ${installingUser.login} by ${sender}`);
-        await sendMonitoringEmail(`GitHub App Deleted ${targetType}: ${installingUser.login}`,
-            `Installation data deleted from Boost GitHub Database\n` +
-            `\t* Type: ${targetType}\n` +
-            `\t* Account: ${installingUser.login}\n` +
-            `\t* Requestor: ${sender}`);
+            const existingInstallErrorInfo = await getUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
+            if (existingInstallErrorInfo) {
+                await deleteUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
+                console.log(`Deleted placeholder error info for ${installingUser.login} - Error: ${JSON.stringify(existingInstallErrorInfo)}`);
+            }
+        } finally {
+            console.log(`Installation data deleted from Boost GitHub Database for account: ${installingUser.login} by ${sender}`);
+            await sendMonitoringEmail(`GitHub App Deleted ${targetType}: ${installingUser.login}`,
+                `Installation data deleted from Boost GitHub Database\n` +
+                `\t* Type: ${targetType}\n` +
+                `\t* Account: ${installingUser.login}\n` +
+                `\t* Requestor: ${sender}`);
+        }
     } catch (error: any) {
         console.error(`Error deleting installation info from DynamoDB:`, error.callstack || error);
         await sendMonitoringEmail(`GitHub App Deletion Failure (${targetType}): ${installingUser.login}`,
@@ -164,10 +184,20 @@ async function getUserInformation(
                 installationId.toString(), sender,);
             console.log(`Installation data saved to DynamoDB for Organization: ${installingUser.login}`);
 
-            await sendMonitoringEmail(`GitHub App Installation: Organization: ${installingUser.login}`,
-                `Installation data saved to Boost GitHub Database for Organization: ${installingUser.login}\n` +
-                `\t* Date: ${usFormatter.format(new Date())}\n` +
-                `\t* Requestor: ${sender}`);
+            try {
+                // see if we can find the admin/email of the org - the person who just installed it
+                const userInfoForOrgAdmin = await getAccountByUsername(sender);
+                if (!userInfoForOrgAdmin) {
+                    console.error(`No user info found for Organization Installer/Admin: ${installingUser.login}`);
+                } else if (userInfoForOrgAdmin.account!.includes('@')) {
+                    await sendOrganizationWelcomeEmail(userInfoForOrgAdmin.account!, installingUser.login, sender);
+                }
+            } finally {
+                await sendMonitoringEmail(`GitHub App Installation: Organization: ${installingUser.login}`,
+                    `Installation data saved to Boost GitHub Database for Organization: ${installingUser.login}\n` +
+                    `\t* Date: ${usFormatter.format(new Date())}\n` +
+                    `\t* Requestor: ${sender}`);
+            }
         } else if (targetType === 'User') {
             const accountName = await getAccountName(app, installationId, sender, installingUser);
 
@@ -177,24 +207,35 @@ async function getUserInformation(
                     installationId.toString(), sender);
 
                 console.error(`No verified primary email found for: ${installingUser.login} by ${sender}`);
+
+                await sendMonitoringEmail(`GitHub App Installation Failure: No Primary Email: ${installingUser.login}`,
+                    `Failed to get primary email for installation\n` +
+                    `\t* Date: ${usFormatter.format(new Date())}\n` +
+                    `\t* Requestor: ${sender}\n` +
+                    `\t* Account: ${installingUser.login}`);
             } else {
                 await saveUser(accountName, installingUser.login,
                     `${sender} Added User at ${usFormatter.format(new Date())}`,
                     installationId.toString(), sender);
-                
-                // delete any placeholder error info for this user
-                const installErrorInfo = await getUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
-                if (installErrorInfo) {
-                    await deleteUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
-                    console.info(`Deleted placeholder error info for ${installingUser.login} - Error: ${JSON.stringify(installErrorInfo)}`);
-                }
 
-                console.log(`Installation data saved to DynamoDB for ${accountName}: Username: ${installingUser.login} by ${sender}`);
-                await sendMonitoringEmail(`GitHub App Installation: Account: ${accountName}`,
-                    `Installation data saved to Boost GitHub Database for Account: ${accountName}\n` +
-                    `\t* Date: ${usFormatter.format(new Date())}\n` +
-                    `\t* Username: ${installingUser.login}\n` +
-                    `\t* Requestor: ${sender}`);
+                try {
+                    await sendWelcomeEmail(accountName, installingUser.login, sender);
+                    
+                    // delete any placeholder error info for this user
+                    const installErrorInfo = await getUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
+                    if (installErrorInfo) {
+                        await deleteUser(`${userAppInstallFailurePrefix}${installingUser.login}`);
+                        console.info(`Deleted placeholder error info for ${installingUser.login} - Error: ${JSON.stringify(installErrorInfo)}`);
+                    }
+
+                } finally {
+                    console.log(`Installation data saved to DynamoDB for ${accountName}: Username: ${installingUser.login} by ${sender}`);
+                    await sendMonitoringEmail(`GitHub App Installation: Account: ${accountName}`,
+                        `Installation data saved to Boost GitHub Database for Account: ${accountName}\n` +
+                        `\t* Date: ${usFormatter.format(new Date())}\n` +
+                        `\t* Username: ${installingUser.login}\n` +
+                        `\t* Requestor: ${sender}`);
+                }
             }
         }
         return true;
@@ -210,6 +251,119 @@ async function getUserInformation(
         return false;
     }
 }
+
+async function sendOrganizationWelcomeEmail(accountEmail: string, installingOrg: string, sender: string) {
+    const imageUrl = "https://boost.polyverse.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FSara_Cartoon_Portrait.80bf5621.png&w=256&q=75";
+    const subject = `Sara is ready to help ${installingOrg} with software projects!`;
+    const htmlBody = `
+        <html>
+            <body>
+                <p><a href="https://github.com/apps/polyverse-boost">Boost GitHub App</a> by <a href="http://www.polyverse.com">Polyverse</a> has been installed for GitHub.com Repository Organization ${installingOrg} by ${sender} at ${usFormatter.format(new Date())}</p>
+                <img src="${imageUrl}" alt="Sara AI Architect" />
+                <p>Sara the AI Architect is now ready to partner with your organization, ${installingOrg}, on your software projects.</p>
+                <p><a href="http://boost.polyverse.com/">http://boost.polyverse.com/</a></p>
+                <p></p>
+                <p>Sara can now access all of the private repositories in your organization to help your team analyze the code achieve their most critical Goals and Tasks on ${installingOrg}'s software projects.</p>
+                <p></p>
+                <p>Please let us know if you have any questions or need assistance by contacting <a href="mailto:support@polyverse.com">support@polyverse.com</a>.</p>
+                <p>Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!</p>
+            </body>
+        </html>
+    `;
+
+    const plainTextBody = `Boost GitHub App has been installed for GitHub.com Repository Organization ${installingOrg} by ${sender} at ${usFormatter.format(new Date())}\n` +
+        `\n` +
+        `\n` +
+        `Sara the AI Architect is now ready to partner with your organization, ${installingOrg}, on your software projects.\n` +
+        `http://boost.polyverse.com/\n` +
+        `\n` +
+        `Sara can now access all of the private repositories in your organization to help your team analyze the code achieve their most critical Goals and Tasks on ${installingOrg}'s software projects.\n` +
+        `\n` +
+        `Please let us know if you have any questions or need assistance by contacting support@polyverse.com.\n` +
+        `Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!`;
+
+    // Send a welcome email to the organization
+    await sendHtmlEmail(subject, htmlBody, plainTextBody, accountEmail, PolyverseSupportEmail);
+}
+
+async function sendWelcomeEmail(accountEmail: string, installingUsername: string, sender: string) {
+
+    const imageUrl = "https://boost.polyverse.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FSara_Cartoon_Portrait.80bf5621.png&w=256&q=75";
+    const subject = `Sara is ready to help you with your software projects!`;
+    const htmlBody = `
+        <html>
+            <body>
+                <p><a href="https://github.com/apps/polyverse-boost">Boost GitHub App</a> by <a href="http://www.polyverse.com">Polyverse</a> has been installed for GitHub.com User ${installingUsername} by ${sender} at ${usFormatter.format(new Date())}</p>
+                <img src="${imageUrl}" alt="Sara AI Architect" />
+                <p>Sara the AI Architect is now ready to partner with you on your software projects.</p>
+                <p><a href="http://boost.polyverse.com/">http://boost.polyverse.com/</a></p>
+                <p></p>
+                <p>Sara can now help you analyze private GitHub.com repositories that you have access to, and achieve your most critical Goals and Tasks on your software projects.</p>
+                <p></p>
+                <p>Please let us know if you have any questions or need assistance by contacting <a href="mailto:support@polyverse.com">support@polyverse.com</a>.</p>
+                <p>Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!</p>
+            </body>
+        </html>
+    `;
+    const plainTextBody = `Boost GitHub App has been installed for GitHub.com User ${installingUsername} by ${sender} at ${usFormatter.format(new Date())}\n` +
+        `\n` +
+        `\n` +
+        `Sara the AI Architect is now ready to partner with you on your software projects.\n` +
+        `http://boost.polyverse.com/\n` +
+        `\n` +
+        `Sara can now help you analyze private GitHub.com repositories that you have access to, and achieve your most critical Goals and Tasks on your software projects.\n` +
+        `\n` +
+        `Please let us know if you have any questions or need assistance by contacting support@polyverse.com.\n`;
+        `Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!`;
+
+    // Send a welcome email to the user
+    await sendHtmlEmail(subject, htmlBody, plainTextBody, accountEmail, PolyverseSupportEmail);
+}
+
+async function sendDepartureEmail(accountEmail: string, installingUsername: string, sender: string) {
+    
+    const imageUrl = "https://boost.polyverse.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FSara_Cartoon_Portrait.80bf5621.png&w=256&q=75";
+
+    const subject = `Sara is sad to see you go!`;
+    const htmlBody = `
+        <html>
+            <body>
+                <p><a href="https://github.com/apps/polyverse-boost">Boost GitHub App</a> by <a href="http://www.polyverse.com">Polyverse</a> has been uninstalled for GitHub.com User ${installingUsername} by ${sender} at ${usFormatter.format(new Date())}</p>
+                <img src="${imageUrl}" alt="Sara AI Architect" />
+                <p>Sara the AI Architect no longer has access to your software projects.</p>
+                <p><a href="http://boost.polyverse.com/">http://boost.polyverse.com/</a></p>
+                <p></p>
+                <p>Sara would still love to help you analyze private GitHub.com repositories that you have access to, and achieve your most critical Goals and Tasks on your software projects.</p>
+                <p></p>
+                <p>If you would still like to use Sara with Boost AI by Polyverse, please reinstall the <a href="https://github.com/apps/polyverse-boost">Polyverse Boost app</a> from the GitHub Marketplace.</p>
+                <p>If you are having any issues with Sara or your account or GitHub repository access, please contact us right away at <a href="mailto:support@polyverse.com">support@polyverse.com</a>.</p>
+                <p>Sara and the entire Polyverse Team are ready to help when you are ready to use Sara with Boost AI again!</p>
+                <p>
+                <p>Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!</p>
+            </body>
+        </html>
+    `;
+
+    const plainTextBody = `Boost GitHub App has been uninstalled for GitHub.com User ${installingUsername} by ${sender} at ${usFormatter.format(new Date())}\n` +
+        `\n` +
+        `\n` +
+        `Sara the AI Architect no longer has access to your software projects.\n` +
+        `http://boost.polyverse.com/\n` +
+        `\n` +
+        `Sara would still love to help you analyze private GitHub.com repositories that you have access to, and achieve your most critical Goals and Tasks on your software projects.\n` +
+        `\n` +
+        `If you would still like to use Sara with Boost AI by Polyverse, please reinstall the Polyverse Boost app from the GitHub Marketplace.\n` +
+        `If you are having any issues with Sara or your account or GitHub repository access, please contact us right away at support@polyverse.com.\n` +
+        `Sara and the entire Polyverse Team are ready to help when you are ready to use Sara with Boost AI again!\n` +
+        `\n` +
+        `Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!`;
+
+    // Send a departure email to the user
+    await sendHtmlEmail(subject, htmlBody, plainTextBody, accountEmail, PolyverseSupportEmail);
+}
+
+async function sendOrganizationDepartureEmail(accountEmail: string, installingOrg: string, sender: string) {
+
 
 async function logRepoAccess(
     app: Probot,
