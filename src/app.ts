@@ -252,21 +252,27 @@ async function getUserInformation(
     }
 }
 
+const saraImageUrl = "https://boost.polyverse.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FSara_Cartoon_Portrait.80bf5621.png&w=256&q=75";
+const saraUrl = "https://boost.polyverse.com/";
+
+const polyveseImageUrl = "https://boost.polyverse.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FPolyverse%20logo%20medium.0b932d85.jpg&w=640&q=75"
+const polyverseUrl = "https://www.polyverse.com"
+
 async function sendOrganizationWelcomeEmail(accountEmail: string, installingOrg: string, sender: string) {
-    const imageUrl = "https://boost.polyverse.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FSara_Cartoon_Portrait.80bf5621.png&w=256&q=75";
     const subject = `Sara is ready to help ${installingOrg} with software projects!`;
     const htmlBody = `
         <html>
             <body>
-                <p><a href="https://github.com/apps/polyverse-boost">Boost GitHub App</a> by <a href="http://www.polyverse.com">Polyverse</a> has been installed for GitHub.com Repository Organization ${installingOrg} by ${sender} at ${usFormatter.format(new Date())}</p>
-                <img src="${imageUrl}" alt="Sara AI Architect" />
+                <p><a href="https://github.com/apps/polyverse-boost">Boost GitHub App</a> by <a href="${polyverseUrl}">Polyverse</a> has been installed for GitHub.com Repository Organization ${installingOrg} by ${sender} at ${usFormatter.format(new Date())}</p>
+                <a href="${polyverseUrl}"><img src="${saraImageUrl}" alt="Sara AI Architect" /></a>
                 <p>Sara the AI Architect is now ready to partner with your organization, ${installingOrg}, on your software projects.</p>
-                <p><a href="http://boost.polyverse.com/">http://boost.polyverse.com/</a></p>
+                <p><a href="${saraUrl}">${saraUrl}</a></p>
                 <p></p>
                 <p>Sara can now access all of the private repositories in your organization to help your team analyze the code achieve their most critical Goals and Tasks on ${installingOrg}'s software projects.</p>
                 <p></p>
                 <p>Please let us know if you have any questions or need assistance by contacting <a href="mailto:support@polyverse.com">support@polyverse.com</a>.</p>
                 <p>Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!</p>
+                <a href="${polyverseUrl}"><img src="${polyveseImageUrl}" alt="Polyverse"/></a>
             </body>
         </html>
     `;
@@ -275,7 +281,7 @@ async function sendOrganizationWelcomeEmail(accountEmail: string, installingOrg:
         `\n` +
         `\n` +
         `Sara the AI Architect is now ready to partner with your organization, ${installingOrg}, on your software projects.\n` +
-        `http://boost.polyverse.com/\n` +
+        `${saraUrl}\n` +
         `\n` +
         `Sara can now access all of the private repositories in your organization to help your team analyze the code achieve their most critical Goals and Tasks on ${installingOrg}'s software projects.\n` +
         `\n` +
@@ -288,20 +294,20 @@ async function sendOrganizationWelcomeEmail(accountEmail: string, installingOrg:
 
 async function sendWelcomeEmail(accountEmail: string, installingUsername: string, sender: string) {
 
-    const imageUrl = "https://boost.polyverse.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FSara_Cartoon_Portrait.80bf5621.png&w=256&q=75";
     const subject = `Sara is ready to help you with your software projects!`;
     const htmlBody = `
         <html>
             <body>
                 <p><a href="https://github.com/apps/polyverse-boost">Boost GitHub App</a> by <a href="http://www.polyverse.com">Polyverse</a> has been installed for GitHub.com User ${installingUsername} by ${sender} at ${usFormatter.format(new Date())}</p>
-                <img src="${imageUrl}" alt="Sara AI Architect" />
+                <a href="${polyverseUrl}"><img src="${saraImageUrl}" alt="Sara AI Architect" /></a>
                 <p>Sara the AI Architect is now ready to partner with you on your software projects.</p>
-                <p><a href="http://boost.polyverse.com/">http://boost.polyverse.com/</a></p>
+                <p><a href="${saraUrl}">${saraUrl}</a></p>
                 <p></p>
                 <p>Sara can now help you analyze private GitHub.com repositories that you have access to, and achieve your most critical Goals and Tasks on your software projects.</p>
                 <p></p>
                 <p>Please let us know if you have any questions or need assistance by contacting <a href="mailto:support@polyverse.com">support@polyverse.com</a>.</p>
                 <p>Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!</p>
+                <a href="${polyverseUrl}"><img src="${polyveseImageUrl}" alt="Polyverse"/></a>
             </body>
         </html>
     `;
@@ -309,7 +315,7 @@ async function sendWelcomeEmail(accountEmail: string, installingUsername: string
         `\n` +
         `\n` +
         `Sara the AI Architect is now ready to partner with you on your software projects.\n` +
-        `http://boost.polyverse.com/\n` +
+        `${saraUrl}\n` +
         `\n` +
         `Sara can now help you analyze private GitHub.com repositories that you have access to, and achieve your most critical Goals and Tasks on your software projects.\n` +
         `\n` +
@@ -321,17 +327,15 @@ async function sendWelcomeEmail(accountEmail: string, installingUsername: string
 }
 
 async function sendDepartureEmail(accountEmail: string, installingUsername: string, sender: string) {
-    
-    const imageUrl = "https://boost.polyverse.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FSara_Cartoon_Portrait.80bf5621.png&w=256&q=75";
 
     const subject = `Sara is sad to see you go!`;
     const htmlBody = `
         <html>
             <body>
                 <p><a href="https://github.com/apps/polyverse-boost">Boost GitHub App</a> by <a href="http://www.polyverse.com">Polyverse</a> has been uninstalled for GitHub.com User ${installingUsername} by ${sender} at ${usFormatter.format(new Date())}</p>
-                <img src="${imageUrl}" alt="Sara AI Architect" />
+                <a href="${polyverseUrl}"><img src="${saraImageUrl}" alt="Sara AI Architect" /></a>
                 <p>Sara the AI Architect no longer has access to your software projects.</p>
-                <p><a href="http://boost.polyverse.com/">http://boost.polyverse.com/</a></p>
+                <p><a href="${saraUrl}">${saraUrl}</a></p>
                 <p></p>
                 <p>Sara would still love to help you analyze private GitHub.com repositories that you have access to, and achieve your most critical Goals and Tasks on your software projects.</p>
                 <p></p>
@@ -340,6 +344,7 @@ async function sendDepartureEmail(accountEmail: string, installingUsername: stri
                 <p>Sara and the entire Polyverse Team are ready to help when you are ready to use Sara with Boost AI again!</p>
                 <p>
                 <p>Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!</p>
+                <a href="${polyverseUrl}"><img src="${polyveseImageUrl}" alt="Polyverse"/></a>
             </body>
         </html>
     `;
@@ -348,7 +353,7 @@ async function sendDepartureEmail(accountEmail: string, installingUsername: stri
         `\n` +
         `\n` +
         `Sara the AI Architect no longer has access to your software projects.\n` +
-        `http://boost.polyverse.com/\n` +
+        `${saraUrl}\n` +
         `\n` +
         `Sara would still love to help you analyze private GitHub.com repositories that you have access to, and achieve your most critical Goals and Tasks on your software projects.\n` +
         `\n` +
@@ -363,16 +368,14 @@ async function sendDepartureEmail(accountEmail: string, installingUsername: stri
 }
 
 async function sendOrganizationDepartureEmail(accountEmail: string, installingOrg: string, sender: string) {
-    const imageUrl = "https://boost.polyverse.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FSara_Cartoon_Portrait.80bf5621.png&w=256&q=75";
-
     const subject = `Sara is sad to see you go!`;
     const htmlBody = `
         <html>
             <body>
                 <p><a href="https://github.com/apps/polyverse-boost">Boost GitHub App</a> by <a href="http://www.polyverse.com">Polyverse</a> has been uninstalled for GitHub.com Organization ${installingOrg} by ${sender} at ${usFormatter.format(new Date())}</p>
-                <img src="${imageUrl}" alt="Sara AI Architect" />
+                <a href="${polyverseUrl}"><img src="${saraImageUrl}" alt="Sara AI Architect" /></a>
                 <p>Sara the AI Architect no longer has access to the software projects/repositories for ${installingOrg}.</p>
-                <p><a href="http://boost.polyverse.com/">http://boost.polyverse.com/</a></p>
+                <p><a href="${saraUrl}">${saraUrl}</a></p>
                 <p></p>
                 <p>Sara would still love to help you analyze private GitHub.com repositories that you have access to, and achieve your organiation's most critical Goals and Tasks on your software projects.</p>
                 <p></p>
@@ -380,12 +383,16 @@ async function sendOrganizationDepartureEmail(accountEmail: string, installingOr
                 <p>If you are having any issues with Sara or your account or GitHub repository access, please contact us right away at <a href="mailto:support@polyverse.com">support@polyverse.com</a>.</p>
                 <p>Sara and the entire Polyverse Team are ready to help when your organization is ready to use Sara with Boost AI again!</p>
                 <p></p>
-                <p>Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!</p>`;
+                <p>Thank you for using Sara with Boost AI by Polyverse and Happy Coding from the Polyverse team!</p>
+                <a href="${polyverseUrl}"><img src="${polyveseImageUrl}" alt="Polyverse"/></a>
+            </body>
+        </html>
+        `;
     const plainTextBody = `Boost GitHub App has been uninstalled for GitHub.com Organization ${installingOrg} by ${sender} at ${usFormatter.format(new Date())}\n` +
         `\n` +
         `\n` +
         `Sara the AI Architect no longer has access to the software projects/repositories for ${installingOrg}.\n` +
-        `http://boost.polyverse.com/\n` +
+        `${saraUrl}\n` +
         `\n` +
         `Sara would still love to help you analyze private GitHub.com repositories that you have access to, and achieve your organiation's most critical Goals and Tasks on your software projects.\n` +
         `\n` +
