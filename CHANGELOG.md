@@ -11,6 +11,7 @@ Polyverse Boost GitHub App
 ### Enhancements
 - Delete only the installation info for user accounts (to preserve the email primary key info)
 - If a User fails to record installation due to missing email, then cleanup the failed installation record on App uninstall
+- Reduce Service package size to 35mb (from 59mb)
 
 ### Bug Fixes
 - N/A
